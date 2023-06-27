@@ -3,7 +3,7 @@ format:
   html:
     embed-resources: false
     page-layout: custom
-    theme: border_style.scss
+    theme: style.scss
 editor: source
 echo: false
 ---
@@ -55,7 +55,7 @@ locations <- read.csv("C:\\Users\\harno\\Documents\\RCode\\station.csv") %>% # S
  mutate(StationID = str_extract(MonitoringLocationIdentifier,"[^\\-]+$")) 
 
 #Extract sites from lake parks spreadsheet
-sites_to_get <- locations$MonitoringLocationIdentifier[1:5]
+sites_to_get <- locations$MonitoringLocationIdentifier
 
 
 #Read WQP Data 

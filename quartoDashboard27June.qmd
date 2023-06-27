@@ -51,7 +51,7 @@ library(dataRetrieval)
 library(tidyverse)
 
 #Filepaths for site names and site metadata
-locations <- read.csv("C:\\Users\\harno\\Documents\\RCode\\station.csv") %>% # Site names and info for all parks 
+locations <- read.csv("station.csv") %>% # Site names and info for all parks 
  mutate(StationID = str_extract(MonitoringLocationIdentifier,"[^\\-]+$")) 
 
 #Extract sites from lake parks spreadsheet

@@ -1,0 +1,905 @@
+{
+   "type": "FeatureCollection",
+   "features": [
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -87.21214,41.61528 ]
+    },
+    "properties": {
+    "FIELD1":1,
+    "glknid":"INDU_01",
+    "Name":"Long Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -87.27861,41.52592 ]
+    },
+    "properties": {
+    "FIELD1":2,
+    "glknid":"INDU_02",
+    "Name":"Lake George"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -87.2727514,41.61525602 ]
+    },
+    "properties": {
+    "FIELD1":3,
+    "glknid":"INDU_05",
+    "Name":"Middle Lagoon"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.5415881,48.1478797 ]
+    },
+    "properties": {
+    "FIELD1":4,
+    "glknid":"ISRO_01",
+    "Name":"Lake Ahmik"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.6617404,48.0912831 ]
+    },
+    "properties": {
+    "FIELD1":5,
+    "glknid":"ISRO_02",
+    "Name":"Sargent Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.7005398,48.0410454 ]
+    },
+    "properties": {
+    "FIELD1":6,
+    "glknid":"ISRO_03",
+    "Name":"Lake Richie"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.7573479,48.0799674 ]
+    },
+    "properties": {
+    "FIELD1":7,
+    "glknid":"ISRO_04",
+    "Name":"Beaver Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.7961173,48.0504249 ]
+    },
+    "properties": {
+    "FIELD1":8,
+    "glknid":"ISRO_05",
+    "Name":"Lake Harvey"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.6852021,48.0077949 ]
+    },
+    "properties": {
+    "FIELD1":9,
+    "glknid":"ISRO_06",
+    "Name":"Lake George"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.7951845,48.0037629 ]
+    },
+    "properties": {
+    "FIELD1":10,
+    "glknid":"ISRO_07",
+    "Name":"Siskiwit Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.9805807,47.9731536 ]
+    },
+    "properties": {
+    "FIELD1":11,
+    "glknid":"ISRO_08",
+    "Name":"Lake Desor"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -89.1773746,47.8551237 ]
+    },
+    "properties": {
+    "FIELD1":12,
+    "glknid":"ISRO_09",
+    "Name":"Feldtmann Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.6282782,48.0572785 ]
+    },
+    "properties": {
+    "FIELD1":13,
+    "glknid":"ISRO_13",
+    "Name":"Wallace Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.61413764,48.04091013 ]
+    },
+    "properties": {
+    "FIELD1":14,
+    "glknid":"ISRO_14",
+    "Name":"Epidote Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.69094789,48.01090652 ]
+    },
+    "properties": {
+    "FIELD1":15,
+    "glknid":"ISRO_19",
+    "Name":"Lake Whittlesey"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.74137275,48.0052505 ]
+    },
+    "properties": {
+    "FIELD1":16,
+    "glknid":"ISRO_20",
+    "Name":"Wood Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.72842355,48.0310142 ]
+    },
+    "properties": {
+    "FIELD1":17,
+    "glknid":"ISRO_21",
+    "Name":"Intermediate Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.70903964,48.05798625 ]
+    },
+    "properties": {
+    "FIELD1":18,
+    "glknid":"ISRO_22",
+    "Name":"Lake LeSage"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.71100419,48.06755637 ]
+    },
+    "properties": {
+    "FIELD1":19,
+    "glknid":"ISRO_24",
+    "Name":"Chickenbone Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.63298586,48.14712904 ]
+    },
+    "properties": {
+    "FIELD1":20,
+    "glknid":"ISRO_30",
+    "Name":"Amygdaloid Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -88.47423865,48.15838829 ]
+    },
+    "properties": {
+    "FIELD1":21,
+    "glknid":"ISRO_32",
+    "Name":"Hidden Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.0326,46.6492 ]
+    },
+    "properties": {
+    "FIELD1":22,
+    "glknid":"PIRO_01",
+    "Name":"Grand Sable Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.31504,46.587293 ]
+    },
+    "properties": {
+    "FIELD1":23,
+    "glknid":"PIRO_02",
+    "Name":"Trapper's Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.361,46.5263 ]
+    },
+    "properties": {
+    "FIELD1":24,
+    "glknid":"PIRO_03",
+    "Name":"Legion Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.3348,46.5722 ]
+    },
+    "properties": {
+    "FIELD1":25,
+    "glknid":"PIRO_04",
+    "Name":"Beaver Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.36124225,46.55788012 ]
+    },
+    "properties": {
+    "FIELD1":26,
+    "glknid":"PIRO_05",
+    "Name":"Little Beaver Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.4514,46.5283 ]
+    },
+    "properties": {
+    "FIELD1":27,
+    "glknid":"PIRO_06",
+    "Name":"Chapel Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.4474,46.54318 ]
+    },
+    "properties": {
+    "FIELD1":28,
+    "glknid":"PIRO_07",
+    "Name":"Little Chapel Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.5383,46.4808 ]
+    },
+    "properties": {
+    "FIELD1":29,
+    "glknid":"PIRO_08",
+    "Name":"Miners Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.02233939,45.12937172 ]
+    },
+    "properties": {
+    "FIELD1":30,
+    "glknid":"SLBE_01",
+    "Name":"Manitou Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.1202991,45.01069 ]
+    },
+    "properties": {
+    "FIELD1":31,
+    "glknid":"SLBE_02",
+    "Name":"Florence Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -85.90557924,44.9360581 ]
+    },
+    "properties": {
+    "FIELD1":32,
+    "glknid":"SLBE_03",
+    "Name":"Narada Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -85.89942562,44.94769385 ]
+    },
+    "properties": {
+    "FIELD1":33,
+    "glknid":"SLBE_04",
+    "Name":"Shell Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -85.88327555,44.92221 ]
+    },
+    "properties": {
+    "FIELD1":34,
+    "glknid":"SLBE_05",
+    "Name":"Bass Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.06052867,44.73989 ]
+    },
+    "properties": {
+    "FIELD1":35,
+    "glknid":"SLBE_07",
+    "Name":"Otter Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -85.95320947,44.9042 ]
+    },
+    "properties": {
+    "FIELD1":36,
+    "glknid":"SLBE_08",
+    "Name":"Tucker Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.06594641,44.84339382 ]
+    },
+    "properties": {
+    "FIELD1":37,
+    "glknid":"SLBE_09",
+    "Name":"North Bar"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.12925073,44.70747 ]
+    },
+    "properties": {
+    "FIELD1":38,
+    "glknid":"SLBE_10",
+    "Name":"Loon Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -86.18465829,44.69306 ]
+    },
+    "properties": {
+    "FIELD1":39,
+    "glknid":"SLBE_11",
+    "Name":"Round Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -93.0038694,48.54091482 ]
+    },
+    "properties": {
+    "FIELD1":40,
+    "glknid":"VOYA_01",
+    "Name":"Locator Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.98383272,48.53761834 ]
+    },
+    "properties": {
+    "FIELD1":41,
+    "glknid":"VOYA_02",
+    "Name":"War Club Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.95327086,48.53244411 ]
+    },
+    "properties": {
+    "FIELD1":42,
+    "glknid":"VOYA_03",
+    "Name":"Quill Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.92865283,48.5275273 ]
+    },
+    "properties": {
+    "FIELD1":43,
+    "glknid":"VOYA_04",
+    "Name":"Loiten Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.88758918,48.49837683 ]
+    },
+    "properties": {
+    "FIELD1":44,
+    "glknid":"VOYA_05",
+    "Name":"Shoepack Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.88129246,48.49006724 ]
+    },
+    "properties": {
+    "FIELD1":45,
+    "glknid":"VOYA_06",
+    "Name":"Little Shoepack Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.847975,48.48404024 ]
+    },
+    "properties": {
+    "FIELD1":46,
+    "glknid":"VOYA_07",
+    "Name":"Jorgens Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.84521021,48.47683446 ]
+    },
+    "properties": {
+    "FIELD1":47,
+    "glknid":"VOYA_08",
+    "Name":"Quarter Line Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.83550273,48.47005256 ]
+    },
+    "properties": {
+    "FIELD1":48,
+    "glknid":"VOYA_09",
+    "Name":"Ek Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.81157594,48.46774893 ]
+    },
+    "properties": {
+    "FIELD1":49,
+    "glknid":"VOYA_10",
+    "Name":"Agnes Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.80659088,48.51684745 ]
+    },
+    "properties": {
+    "FIELD1":50,
+    "glknid":"VOYA_11",
+    "Name":"Oslo Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.79640501,48.51635071 ]
+    },
+    "properties": {
+    "FIELD1":51,
+    "glknid":"VOYA_12",
+    "Name":"Brown Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.78154571,48.52772782 ]
+    },
+    "properties": {
+    "FIELD1":52,
+    "glknid":"VOYA_13",
+    "Name":"Fishmouth Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.77154631,48.52479679 ]
+    },
+    "properties": {
+    "FIELD1":53,
+    "glknid":"VOYA_14",
+    "Name":"Peary Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.75953903,48.50823074 ]
+    },
+    "properties": {
+    "FIELD1":54,
+    "glknid":"VOYA_15",
+    "Name":"Beast Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.8131399,48.49888953 ]
+    },
+    "properties": {
+    "FIELD1":55,
+    "glknid":"VOYA_16",
+    "Name":"Cruiser Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.70735632,48.51881597 ]
+    },
+    "properties": {
+    "FIELD1":56,
+    "glknid":"VOYA_17",
+    "Name":"Ryan Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.65660492,48.39550795 ]
+    },
+    "properties": {
+    "FIELD1":57,
+    "glknid":"VOYA_18",
+    "Name":"Net Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.64328298,48.39856671 ]
+    },
+    "properties": {
+    "FIELD1":58,
+    "glknid":"VOYA_19",
+    "Name":"Tooth Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.53250602,48.41597226 ]
+    },
+    "properties": {
+    "FIELD1":59,
+    "glknid":"VOYA_20",
+    "Name":"O'Leary Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.5252564,48.39794469 ]
+    },
+    "properties": {
+    "FIELD1":60,
+    "glknid":"VOYA_21",
+    "Name":"Little Trout Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.48668335,48.33403847 ]
+    },
+    "properties": {
+    "FIELD1":61,
+    "glknid":"VOYA_22",
+    "Name":"Mukooda Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.58403316,48.37846 ]
+    },
+    "properties": {
+    "FIELD1":62,
+    "glknid":"VOYA_23",
+    "Name":"Lucille Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.74048441,48.51402 ]
+    },
+    "properties": {
+    "FIELD1":63,
+    "glknid":"VOYA_24",
+    "Name":"McDivitt Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.74482188,48.49696 ]
+    },
+    "properties": {
+    "FIELD1":64,
+    "glknid":"VOYA_25",
+    "Name":"Weir Lake"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -91.33019707,46.17112929 ]
+    },
+    "properties": {
+    "FIELD1":65,
+    "glknid":"SACN_NAKA_84.6",
+    "Name":"Leonards"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -91.76418,45.91588113 ]
+    },
+    "properties": {
+    "FIELD1":66,
+    "glknid":"SACN_NAKA_41.3",
+    "Name":"Earl"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.11379,46.08369 ]
+    },
+    "properties": {
+    "FIELD1":67,
+    "glknid":"SACN_NAKA_4.8",
+    "Name":"Nam Tr."
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.13181,46.11655 ]
+    },
+    "properties": {
+    "FIELD1":68,
+    "glknid":"SACN_STCR_138.9",
+    "Name":"CCC"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.63865,45.92586098 ]
+    },
+    "properties": {
+    "FIELD1":69,
+    "glknid":"SACN_STCR_104.0",
+    "Name":"Norway Pt."
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.78062,45.77404 ]
+    },
+    "properties": {
+    "FIELD1":70,
+    "glknid":"SACN_STCR_89.7",
+    "Name":"Hwy 70"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.75213,45.55576 ]
+    },
+    "properties": {
+    "FIELD1":71,
+    "glknid":"SACN_STCR_63.8",
+    "Name":"Nevers"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.73470132,45.30257256 ]
+    },
+    "properties": {
+    "FIELD1":72,
+    "glknid":"SACN_STCR_43.7",
+    "Name":"Osceola"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.76500353,45.01838386 ]
+    },
+    "properties": {
+    "FIELD1":73,
+    "glknid":"SACN_STCR_20.0",
+    "Name":"Bayport"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.76014336,44.95902658 ]
+    },
+    "properties": {
+    "FIELD1":74,
+    "glknid":"SACN_STCR_15.8",
+    "Name":"Hudson"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+       "type": "Point",
+       "coordinates":  [ -92.80502745,44.76971626 ]
+    },
+    "properties": {
+    "FIELD1":75,
+    "glknid":"SACN_STCR_2.0",
+    "Name":"Prescott"
+    }
+  }
+]
+}

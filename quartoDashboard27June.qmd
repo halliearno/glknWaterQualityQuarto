@@ -1,0 +1,979 @@
+---
+format:
+  html:
+    embed-resources: false
+    page-layout: custom
+    theme: border_style.scss
+editor: source
+echo: false
+---
+<!--head-->
+
+```{=html}
+<div class="banner">
+  <p>
+    <img src = "logo.png" style="vertical-align:middle" height="50">
+    National Park Service
+  </p>
+</div>
+
+
+
+```
+<!--\head-->
+
+```{=html}
+<div class = "headerImage">
+  <p>
+  <img src="placeholder1.jpg" alt="Placeholder alt" width=3000>
+  </p>
+</div>
+```
+
+```{=html}
+<div class = "title">
+  <h1>
+  GLKN Water Quality Visualizer
+  </h1>
+</div>
+```
+
+
+```{r echo = FALSE, message = FALSE, include = FALSE}
+library(reactable)
+library(htmltools)
+library(plotly)
+library(lubridate)
+library(data.table)
+library(dataRetrieval)
+
+#Load Packages
+library(tidyverse)
+
+#Filepaths for site names and site metadata
+locations <- read.csv("C:\\Users\\harno\\Documents\\RCode\\station.csv") %>% # Site names and info for all parks 
+ mutate(StationID = str_extract(MonitoringLocationIdentifier,"[^\\-]+$")) 
+
+#Extract sites from lake parks spreadsheet
+sites_to_get <- locations$MonitoringLocationIdentifier[1:5]
+
+
+#Read WQP Data 
+df <- readWQPqw(c(siteNumbers = sites_to_get,""),'','') 
+
+
+
+#delete any "non-data" results, such as weather obs, comments, air temp, etc. Do this by using "grepl" with "!" (not) to delete any records with "ActivityMediaName"="Air" or "Other". Note: the "|" is "or" and allows selection of multiple items to delete. Deletes whole row.  
+#delete other non-data (subjective) results that have "ActivityMediaName" = "Water". Delete in "CharacteristicName" =  "water apperance (text)" and "wave height" using "!grepl". Deletes whole row.
+vars_to_remove = c("Age", "Carbon, isotope of mass 13", "Chlorophyll/Pheophytin ratio", "External condition (text)", "Head Capsule Width", "Mercury", "Methylmercury(1+)", "Sex (choice list)", "Weight")
+
+
+
+dt <- data.table(df) %>% 
+  filter(!grepl("Quality Control", ActivityTypeCode)) %>% 
+  filter(!grepl("Air|Other", ActivityMediaName)) %>% 
+  filter(!grepl("Wave height|Water appearance", CharacteristicName)) %>% 
+  filter(!grepl("Length", CharacteristicName)) %>% 
+  filter(!grepl("-", CharacteristicName)) %>% 
+  subset(!(CharacteristicName %in% vars_to_remove))
+
+
+#When charactersistic name is Phosphorus and is not from the surface, replace w/ "Bottom Phosphorus"
+dt[,CharacteristicName:= fcase(ActivityDepthHeightMeasure.MeasureValue !=0 & CharacteristicName == "Total Phosphorus, mixed forms", "Bottom Phosphorus",
+                               CharacteristicName != "Bottom Phosphorus", CharacteristicName)] 
+
+
+#Select and rename relevant columns
+glknwqp <- dt %>% select(c("ActivityIdentifier", 
+                           "CharacteristicName", 
+                           "ActivityDepthHeightMeasure.MeasureValue", 
+                           "ResultMeasureValue", "ActivityEndDateTime", 
+                           "MonitoringLocationIdentifier", 
+                           "ResultMeasure.MeasureUnitCode")) %>% 
+  
+  mutate(Site = str_extract(MonitoringLocationIdentifier,"[^\\-]+$")) %>% 
+  mutate(Park = substr(Site, 1, 4)) %>% 
+  
+  rename(c("Activity_ID" = "ActivityIdentifier", 
+           "Depth" = "ActivityDepthHeightMeasure.MeasureValue", 
+           "Value" = "ResultMeasureValue",   
+           "DateTime" = "ActivityEndDateTime",
+           "Variable" = "CharacteristicName",
+           "Units" = "ResultMeasure.MeasureUnitCode")) %>%
+  
+  mutate_at(vars("Depth"),~replace_na(.,0))
+
+
+# Add lat long
+locations <- locations %>% select(StationID, LatitudeMeasure, LongitudeMeasure, MonitoringLocationName)
+
+colnames(locations) <- c("glknid", "Latitude", "Longitude", "Name")
+
+
+df <- merge(glknwqp, locations, by.x = "Site", by.y = "glknid", all.x = TRUE)
+
+df <- df %>% 
+    mutate(Value = as.numeric(Value)) %>% 
+    mutate(Date = as.Date(DateTime)) %>% 
+    mutate(Date = as.character(Date)) %>% 
+    mutate(Year = year(Date)) %>% 
+    mutate(Month = month(Date)) 
+
+ df <- df[order(-df$Depth), ] #this is for profile plots. It *seems* to not be impacting other plots. I really don't want to try to do this in js. 
+
+ojs_define(data = transpose(df))
+```
+
+
+
+```{r}
+##//|echo: false
+#d3 = require("d3-array")
+```
+
+```{ojs}
+//| echo: false
+Plotly = require("https://cdn.plot.ly/plotly-2.16.1.min.js")
+```
+
+```{ojs}
+//| echo: false
+
+// Filter based on inputs.
+
+filtered = data.filter(function(waterFilter) {
+  return yearsmin < waterFilter.Year &&
+         yearsmax > waterFilter.Year &&
+         depthmin <= waterFilter.Depth &&
+         depthmax >= waterFilter.Depth &&
+       //  park.includes(waterFilter.Park) && //fix
+         varname.includes(waterFilter.Variable) &&
+         site.includes(waterFilter.Name);
+})
+```
+
+
+<!---
+Time Series
+-->
+
+```{ojs}
+//| echo: false
+//| 
+function var_Plot(var_name) {
+  let holder = [] 
+  let holdercount = 0 
+  
+  let datalist = []
+  let layoutlist = []
+  let divlist = []
+
+  
+    let thisvar = var_name;
+    
+    if (typeof thisvar !== "undefined") { //make sure it is not undefined to avoid errors
+      
+      let df = filtered.filter(function(tracefilter){ //filter so that one variable at a time is used in each TRACE
+        return thisvar.includes(tracefilter.Variable);
+      })
+      
+      for (let s = 0; s <= site.length; s ++) { //loop through each selected site
+        let thissite = site[s];
+        
+        if (typeof thissite !== "undefined") {
+          let df_site = df.filter(function(sitefilter) { //filter so that one site at a time is used in TRACE
+            return thissite.includes(sitefilter.Name); 
+          })
+        //}  
+      
+        let eachvar_y =     
+          df_site.map(({Value:actualValue})=>actualValue);  //need to turn data into array (list of numbers to display on y-axis)
+      
+        let eachvar_x = 
+          df_site.map(({Date:actualValue})=>actualValue); //list of dates for x axis
+      
+    
+        let eachtrace  = { // make each trace
+          y: eachvar_y,
+          x: eachvar_x,
+       //   xaxis: xnames[i],
+       //s   yaxis: ynames[i],
+          type: 'scatter',
+          mode: 'markers',
+          marker: {autocolorscale: false, color: 5}, //I will be shocked if this works but it's the right idea}
+          name: thissite
+        };
+        
+        holder[holdercount] = eachtrace; //put into list
+        holdercount++; 
+        
+        
+        } //if not undefined s close
+      } // s loop close
+      
+      var data = holder;
+
+
+    var layout = {
+      title: {
+      text: var_name,
+      font: {
+          family: 'Arial',
+          size: 14 }
+      },
+      autosize: false,
+      width: 700,
+      height: 1000/varname.length,
+      margin: {
+        l: 50,
+        r: 50,
+        b: 30,
+        t: 30,
+        pad: 4
+  }, 
+      };
+
+  
+    const div = DOM.element("div"); //plots
+    Plotly.newPlot(div, data, layout);
+    return div; 
+  
+    
+   } // if not undefined i close
+    
+
+
+  } // function close
+  
+//return var_Plot();
+//} // code block close
+```
+
+<!---
+Boxplot
+-->
+
+```{ojs}
+//|echo: false
+
+function box_Plot(var_name) {
+
+  let thisvar = var_name;
+    
+    if (typeof thisvar !== "undefined") { //make sure it is not undefined to avoid errors
+      
+      let df_var = filtered.filter(function(tracefilter){ //filter so that one variable at a time is used in each TRACE
+        return thisvar.includes(tracefilter.Variable);
+      })
+      
+  let holder = [] 
+  for (let i = 0; i <= site.length; i ++) {
+    let thissite = site[i];
+    
+    if (typeof thissite !== "undefined") {
+    let df = df_var.filter(function(tracefilter){
+      return thissite.includes(tracefilter.Name);
+    })
+    
+   let eachvar_y = 
+      df.map(({Value:actualValue})=>actualValue);
+      
+    let eachvar_x = 
+      df.map(({Month:actualValue})=>actualValue);
+    
+    let eachtrace  = {
+      y: eachvar_y,
+      x: eachvar_x,
+      type: 'box',
+      name: thissite,
+      boxpoints: false
+    };
+    
+    holder[i] = eachtrace;
+    
+} // if not undefined s close
+} //i loop close
+
+var data = holder;
+
+var layout = {
+
+   autosize: false,
+      width: 700,
+      height: 1000/varname.length,
+      margin: {
+        l: 50,
+        r: 50,
+        b: 30,
+        t: 30,
+        pad: 4
+  }, 
+    title: {
+      text: var_name,
+      font: {
+          family: 'Arial',
+          size: 14 }
+      },
+  boxmode: 'group'
+  };
+
+const div = DOM.element('div');
+Plotly.newPlot(div, data, layout);
+return div; 
+
+} // not undefined var close 
+
+} // function close
+```
+
+<!-- Profile Plot -->
+
+```{ojs}
+profileData = data.filter(function(waterFilter) {
+  return year == waterFilter.Year &&
+         month >= waterFilter.Month;
+
+})
+```
+
+```{ojs}
+//|echo: false
+
+function profile_Plot(var_name) {
+
+//filter out so only the correct variable is being used
+  let thisvar = var_name;
+    
+    if (typeof thisvar !== "undefined") { //make sure it is not undefined to avoid errors
+      
+      let df_var = profileData.filter(function(tracefilter){ //filter so that one variable at a time is used in each TRACE
+        return thisvar.includes(tracefilter.Variable)
+        ;
+      })
+      
+    //Now need to filter so that each trace is only one DATE at one SITE. 
+    //Start w/ site:
+     let holder = [] 
+     let holdercount = 0 
+     
+  for (let i = 0; i <= site.length; i ++) { //site is an input (array)
+  
+    let thissite = site[i];
+    
+    if (typeof thissite !== "undefined") {
+      let df_site = df_var.filter(function(tracefilter){
+      return thissite.includes(tracefilter.Name) &&
+      month == tracefilter.Month; //month is also an input. This is to cut down on crowdedness in the plot. Should result in 1-3 traces per site. 
+    })
+    
+   let datelist = df_site.map(({Date:actualValue})=>actualValue);
+    
+    let outputArray = [];
+    
+    function removeusingSet(arr) {
+    let outputArray = Array.from(new Set(arr))
+    return outputArray
+    }
+    
+    
+    let unique = removeusingSet(datelist);
+  
+    
+    for (let j = 0; j <= unique.length; j ++) {
+      let thistrace = unique[j] 
+      
+       if (typeof thistrace !== "undefined") {
+      let df = df_site.filter(function(tracefilter){
+        return thistrace.includes(tracefilter.Date);
+      })
+    
+       
+      let eachvar_y = 
+        df.map(({Depth:actualValue})=>-actualValue);
+        
+      let eachvar_x = 
+        df.map(({Value:actualValue})=>actualValue);
+    
+      let eachtrace  = {
+        y: eachvar_y,
+        x: eachvar_x,
+       // type: 'scatter',
+        name: thistrace,
+        mode: 'lines+markers'
+      };
+    
+      holder[holdercount] = eachtrace; //put into list
+      holdercount++; 
+    
+} //this trace !undefined. Maybe move?
+} // if not undefined s close
+
+}// j loop close
+} //i loop close
+    
+     var data = holder;
+
+
+    var layout = {
+      title: {
+      text: var_name,
+      font: {
+          family: 'Arial',
+          size: 14 }
+      },
+      autosize: false,
+      width: 400,
+      height: 700,
+      margin: {
+        l: 30,
+        r: 30,
+        b: 30,
+        t: 30,
+        pad: 4
+  }, 
+      };
+
+  
+    const div = DOM.element("div"); //plots
+    Plotly.newPlot(div, data, layout);
+    return div; 
+  
+    
+   } // if not undefined i close
+    
+
+
+
+} // function close
+```
+
+
+<!---
+Outputs
+-->
+
+
+:::: panel-sidebar
+```{ojs}
+//| echo: false
+
+//Park selection
+viewof park = Inputs.select(
+  ["SACN", "ISRO", "VOYA", "SLBE", "INDU", "APIS", "PIRO"], 
+  { value: ["ISRO"], multiple: true, label: "Park:" }
+)
+
+// Filter so that only sites in selected parks are displayed
+sitechoices = data.filter(function(inputdata) {
+  return park.includes(inputdata.Park);
+})
+
+// Select site
+//viewof site = Inputs.checkbox(sitechoices.map(d => d.Name),
+//{label: "Site:", unique: true, multiple: true})
+
+viewof site = Inputs.checkbox(
+  data.map(d => d.Name), 
+  {label: "Site:", unique: true, sort: true, multiple: true}
+)
+
+```
+::::
+
+:::: panel-tabset
+## Map
+<!--Inspired by https://github.com/kbvernon/hndsr-watersheds-->
+```{ojs}
+//Initiate leaflet map
+L = {
+  const L = await require("leaflet/dist/leaflet.js");
+  if (!L._style) {
+    const href = await require.resolve("leaflet/dist/leaflet.css");
+    document.head.appendChild(L._style = html`<link href=${href} rel=stylesheet>`);
+  }
+
+  return L;
+};
+
+```
+
+```{ojs}
+//Upload geojson. This was obtained using an online converter (csv -> geojson) using a list of latitude, longitudes, and site names. 
+glknsites = d3.json("glknsites.geojson"); 
+```
+
+
+```{ojs}
+//Container for leaflet map to go into. 
+container = {
+
+  let x = d3.create("div")
+  
+  x.attr("style", `width:100%;height:${window.outerHeight * 0.65}px`);
+
+  return x.node();
+
+}
+
+```
+
+```{ojs}
+
+glknParks = {
+  
+  let map = L.map(container);
+  
+  
+  const esri = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
+
+  
+ // const Esri_WorldImagery = L.tileLayer(
+ // 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 
+//  {
+//	  attribution: esri,
+//	  minZoom: 0,
+//  	maxZoom: 18,
+ //   ext: 'png'
+ // }).addTo(map);
+  
+ var OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	maxZoom: 19,
+	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+  
+  // button to toggle basemap layer selection
+  
+  map.setView([44.3, -90], 6);
+
+  return map; 
+
+};
+
+```
+
+```{ojs}
+
+// results variable for tracking site selections
+mutable results = []; //HERE
+
+```
+
+```{ojs}
+waterIcon = L.icon({
+    iconUrl: 'waterdrop.png',
+    iconSize:     [15, 20], // size of the icon
+    iconAnchor:   [5, 12], // point of the icon which will correspond to marker's location
+    popupAnchor:  [-3, -7] // point from which the popup should open relative to the iconAnchor
+});
+
+waterIcon2 = L.icon({
+    iconUrl: 'waterdrop.png',
+    iconSize:     [28.6, 37.2], // size of the icon
+    iconAnchor:   [10, 24], // point of the icon which will correspond to marker's location
+    popupAnchor:  [-5, -13] // point from which the popup should open relative to the iconAnchor
+});
+
+markers = new Array();
+
+geojson = {
+  
+
+// indexOf returns index number if e exists, -1 otherwise
+  const idx = (e) => { return results.indexOf(e.feature.properties.Name); };
+  
+ const highlightFeature = (e) => {
+
+   // e.target.setStyle(styles.highlight); 
+    //e.target.bringToFront();
+    e.target.openPopup();
+  
+  };
+  
+  const resetHighlight = (e) => { 
+
+    //let q = (idx(e.target) < 0) ? styles.basic : styles.select;
+    
+    //e.target.setStyle(q);
+    e.target.closePopup();
+  
+  };
+  
+  const toggleFeature = (e) => {
+  
+    
+    const i = idx(e.target);
+    
+    
+    if (i > -1) { //if the selected point is already in the results list
+            
+      results.splice(i, 1); //remove site from results list 
+      e.target.setIcon(waterIcon);
+      
+    } else {
+      //if it is not already there, put it there       
+      results.push(e.target.feature.properties.Name);
+      e.target.setIcon(waterIcon2);
+     // e.target.marker.setIcon(new waterIcon2);
+    };
+          
+  };
+
+  
+  const onEachFeature =  (feature, layer) => {
+    
+    layer.on({
+      mouseover: highlightFeature,
+      mouseout: resetHighlight,
+      click: toggleFeature
+    });
+    
+      
+    
+  //   layer.on('click', function (e) {
+   //e.target.setIcon(new waterIcon2);
+    //}); //when this works get it to toggle back
+    
+  }
+
+  let layer = L.geoJSON(glknsites, {
+      onEachFeature: onEachFeature,
+      pointToLayer: function(feature,latlng){
+      return L.marker(latlng,{icon: waterIcon})
+      .bindPopup(feature.properties.Name);
+       //   markers.push(L.marker(latlng,{icon: waterIcon}) //was return
+      
+      }
+      
+  
+  }).addTo(glknParks);
+  
+  markers.push(layer)
+  
+  return layer;
+
+}
+
+```
+
+```{ojs}
+markers
+```
+
+<!-- THE REACTIONS -->
+
+```{ojs}
+
+mutable trigger = [0];
+
+```
+
+```{ojs}
+//| output: false
+
+geojson.on("click", (e) => { mutable trigger += 1; });
+
+```
+
+```{ojs}
+
+// Add site IDs to results variable
+
+displayResults = {
+
+  trigger;
+
+  let txt = [];
+  
+  if (results.length > 0) { txt.push(results.map(e => " " + e)) };
+  set(viewof site, results); 
+  d3.select(".results")
+    .selectAll("p")
+    .filter((d,i) => { return i == 0 })
+    .text(txt);
+
+};
+
+```
+
+```{ojs}
+// push results to viewof site (site input)
+function set(input, value) {
+  input.value = value;
+  input.dispatchEvent(new Event("input", {bubbles: true}));
+}
+
+```
+
+```{r}
+# //| echo: false
+# //| output: false
+# //I think this syncs inputs and map markers. 
+# geojson.eachLayer(e => {
+#       
+#   let p = e.feature.properties;
+#   let i = site.indexOf(p.Name);
+#   
+#   if (site.length ) {
+#   
+#     
+#       if (i < 0) {
+#   
+#         e.target.setIcon(waterIcon2);
+#         results.push(p.Name);
+#         mutable trigger += 1;
+#         
+#   
+#     } else { 
+# 
+#       if (i > -1) {
+#       
+#         e.target.setIcon(waterIcon);
+#         result.splice(i, 1);
+#         mutable trigger -= 1;
+#       
+#       };
+#   
+#     };
+#   
+#   } else { };
+# 
+# });
+
+```
+
+
+## Plots
+
+::: {.panel-fill layout="[ [1,1] ]"}
+```{ojs}
+//|panel: input
+
+
+import {rangeSlider} from "@mootari/range-slider@1312"
+
+//Variable selection
+viewof varname = Inputs.select(
+  data.map(d => d.Variable), 
+  {label: "Variable:", unique: true, sort: true, multiple: true, value: "pH"}
+)
+
+```
+
+```{ojs}
+//|panel: input
+
+// Minimum year slider
+viewof yearsmin = Inputs.range(
+  [2009, 2022], 
+  { value: 2009, step: 1, label: "Min Year:" }
+)
+
+// Maximum year slider
+viewof yearsmax = Inputs.range(
+  [2009, 2023], 
+  { value: 2022, step: 1, label: "Max Year:" }
+)
+
+// Minimum depth slider
+viewof depthmin = Inputs.range(
+  [0, 50], 
+  { value: 0, step: 0.5, label: "Min Depth:" }
+)
+
+// Maximum depth slider
+viewof depthmax = Inputs.range(
+  [0, 50], 
+  { value: 50, step: 0.5, label: "Max Depth:" }
+)
+
+```
+
+
+```{ojs}
+//| echo: false
+{
+  if (typeof varname[0] !== "undefined") {
+    return var_Plot(varname[0]);
+  } else {
+    return("")
+  }
+
+}
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+box_Plot(varname[0])
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+var_Plot(varname[1]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+box_Plot(varname[1]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+var_Plot(varname[2]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+box_Plot(varname[2]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+var_Plot(varname[3]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+box_Plot(varname[3]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+var_Plot(varname[4]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+box_Plot(varname[4]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+var_Plot(varname[5]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+box_Plot(varname[5]);
+```
+
+```{ojs}
+//| echo: false
+//| message: false
+var_Plot(varname[6]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+box_Plot(varname[6]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+var_Plot(varname[7]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+box_Plot(varname[7]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+var_Plot(varname[8]);
+```
+
+```{ojs}
+//| echo: false
+//| warning: false
+box_Plot(varname[8]);
+```
+
+```{ojs}
+button = (data, filename = 'data.csv') => {
+  if (!data) throw new Error('Array of data required as first argument');
+
+  let downloadData;
+  if (filename.includes('.csv')) {
+    downloadData = new Blob([d3.csvFormat(data)], { type: "text/csv" });
+  } else {
+    downloadData = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json"
+    });
+  }
+
+  const size = (downloadData.size / 1024).toFixed(0);
+  const button = DOM.download(
+    downloadData,
+    filename,
+    `Download (~${size} KB)`
+  );
+  return button;
+}
+```
+
+
+```{ojs}
+//| echo: false
+Inputs.table(filtered)
+
+
+{const buttondiv = DOM.element('buttondiv');
+  const csvBtn = button(filtered, 'glknWaterQualityFiltered.csv');
+  const csvText = md`##### Download filtered data as csv:`
+   buttondiv.appendChild(csvText);
+  buttondiv.appendChild(csvBtn);
+  return buttondiv; 
+  }
+```
+:::
+
+## Profiles
+```{ojs}
+//|panel: input
+viewof month = Inputs.range(
+  [4, 11], 
+  {value: 7, step: 1, label: "Season:" }
+)
+
+viewof year = Inputs.range(
+  [2007, 2023], 
+  {value: 2008, step: 1, label: "Year:" }
+)
+```
+
+::: {.panel-fill layout="[ [1,1,1,1] ]"}
+```{ojs}
+profile_Plot("Temperature, water")
+```
+
+```{ojs}
+profile_Plot("Dissolved oxygen (DO)")
+```
+
+```{ojs}
+profile_Plot("Specific conductance")
+```
+
+```{ojs}
+profile_Plot("pH")
+```
+:::
+
+::::
+
+

@@ -40,9 +40,7 @@ echo: false
 
 
 ```{r echo = FALSE, message = FALSE, include = FALSE}
-library(reactable)
-library(htmltools)
-library(plotly)
+
 library(lubridate)
 library(data.table)
 library(dataRetrieval)
@@ -55,7 +53,7 @@ locations <- read.csv("station.csv") %>% # Site names and info for all parks
  mutate(StationID = str_extract(MonitoringLocationIdentifier,"[^\\-]+$")) 
 
 #Extract sites from lake parks spreadsheet
-sites_to_get <- locations$MonitoringLocationIdentifier
+sites_to_get <- locations$MonitoringLocationIdentifier 
 
 
 #Read WQP Data 
@@ -126,11 +124,6 @@ ojs_define(data = transpose(df))
 
 
 
-```{r}
-##//|echo: false
-#d3 = require("d3-array")
-```
-
 ```{ojs}
 //| echo: false
 Plotly = require("https://cdn.plot.ly/plotly-2.16.1.min.js")
@@ -142,10 +135,12 @@ Plotly = require("https://cdn.plot.ly/plotly-2.16.1.min.js")
 // Filter based on inputs.
 
 filtered = data.filter(function(waterFilter) {
-  return yearsmin < waterFilter.Year &&
-         yearsmax > waterFilter.Year &&
+  return yearsmin <= waterFilter.Year &&
+         yearsmax >= waterFilter.Year &&
          depthmin <= waterFilter.Depth &&
          depthmax >= waterFilter.Depth &&
+         monthhmin <= waterFilter.Month &&
+         monthmax >= waterFilter.Month &&
        //  park.includes(waterFilter.Park) && //fix
          varname.includes(waterFilter.Variable) &&
          site.includes(waterFilter.Name);
@@ -340,6 +335,11 @@ profileData = data.filter(function(waterFilter) {
 //|echo: false
 
 function profile_Plot(var_name) {
+  let colors = ['#1f77b4',  '#ff7f0e',  '#2ca02c',  '#d62728',  '#9467bd',  '#8c564b',  '#e377c2',  '#7f7f7f',  '#bcbd22',  '#17becf',
+                '#1f77b4',  '#ff7f0e',  '#2ca02c',  '#d62728',  '#9467bd',  '#8c564b',  '#e377c2',  '#7f7f7f',  '#bcbd22',  '#17becf',
+                '#1f77b4',  '#ff7f0e',  '#2ca02c',  '#d62728',  '#9467bd',  '#8c564b',  '#e377c2',  '#7f7f7f',  '#bcbd22',  '#17becf']   
+  //limitation- can only handle 30 traces 
+  //here is where I could make a custom color scheme if I was feeling clever
 
 //filter out so only the correct variable is being used
   let thisvar = var_name;
@@ -354,6 +354,7 @@ function profile_Plot(var_name) {
     //Now need to filter so that each trace is only one DATE at one SITE. 
     //Start w/ site:
      let holder = [] 
+     let secchiholder = []
      let holdercount = 0 
      
   for (let i = 0; i <= site.length; i ++) { //site is an input (array)
@@ -386,7 +387,9 @@ function profile_Plot(var_name) {
       let df = df_site.filter(function(tracefilter){
         return thistrace.includes(tracefilter.Date);
       })
-    
+    //Secchi stuff was here
+       
+      let thissecchi = getsecchi(thissite, thistrace)[0];
        
       let eachvar_y = 
         df.map(({Depth:actualValue})=>-actualValue);
@@ -398,10 +401,33 @@ function profile_Plot(var_name) {
         y: eachvar_y,
         x: eachvar_x,
        // type: 'scatter',
-        name: thistrace,
-        mode: 'lines+markers'
+        name: thissite+" "+thistrace, 
+        mode: 'lines+markers',
+        marker: {
+          color: colors[holdercount] 
+        }
+      };
+      
+    
+     
+      let secchiholdertemp =  {
+        y: [thissecchi],
+        x: [0],
+        mode: 'markers',
+        type: 'scatter',
+        name: "",
+        showlegend: false,
+        marker: {
+          symbol: 'square',
+          size: 10,
+          color: colors[holdercount]
+        },
+         hovertemplate: 'Secchi Depth: %{y}m' +
+                        '<br>'+thissite+'<br>' +
+                        thistrace
       };
     
+      secchiholder[holdercount] =secchiholdertemp; 
       holder[holdercount] = eachtrace; //put into list
       holdercount++; 
     
@@ -411,7 +437,7 @@ function profile_Plot(var_name) {
 }// j loop close
 } //i loop close
     
-     var data = holder;
+     var data = holder.concat(secchiholder);
 
 
     var layout = {
@@ -424,6 +450,7 @@ function profile_Plot(var_name) {
       autosize: false,
       width: 400,
       height: 700,
+     // shapes: secchiholder,
       margin: {
         l: 30,
         r: 30,
@@ -437,8 +464,7 @@ function profile_Plot(var_name) {
     const div = DOM.element("div"); //plots
     Plotly.newPlot(div, data, layout);
     return div; 
-  
-    
+    //return secchiholder
    } // if not undefined i close
     
 
@@ -446,6 +472,29 @@ function profile_Plot(var_name) {
 
 } // function close
 ```
+
+```{ojs}
+function getsecchi(site, date) {
+      let thissecchi = profileData.filter(function(secchiFilter){
+        return site.includes(secchiFilter.Name) &&
+        date.includes(secchiFilter.Date) &&
+        "Depth, Secchi disk depth".includes(secchiFilter.Variable);
+      })
+    //  return Inputs.table(thissecchi) 
+      
+      if (thissecchi.length > 0) {
+      let secchiVal = 
+        thissecchi.map(({Value:actualValue})=>-actualValue);
+        return secchiVal;
+      } else {
+        let secchiVal = 0;
+        return secchiVal;
+      
+}
+      
+}
+```
+
 
 
 <!---
@@ -655,10 +704,6 @@ geojson = {
 
 ```
 
-```{ojs}
-markers
-```
-
 <!-- THE REACTIONS -->
 
 ```{ojs}
@@ -786,6 +831,20 @@ viewof depthmax = Inputs.range(
   { value: 50, step: 0.5, label: "Max Depth:" }
 )
 
+// Maximum month slider
+viewof monthhmin = Inputs.range(
+  [1, 12], 
+  { value: 1, step: 1, label: "Min month:" }
+)
+
+// Maximum month slider
+viewof monthmax = Inputs.range(
+  [1, 12], 
+  { value: 12, step: 1, label: "Max month:" }
+)
+
+
+
 ```
 
 
@@ -903,6 +962,11 @@ var_Plot(varname[8]);
 box_Plot(varname[8]);
 ```
 
+
+```{=html}
+<h3> Data Preview and Download </h3>
+```
+
 ```{ojs}
 button = (data, filename = 'data.csv') => {
   if (!data) throw new Error('Array of data required as first argument');
@@ -975,5 +1039,3 @@ profile_Plot("pH")
 :::
 
 ::::
-
-

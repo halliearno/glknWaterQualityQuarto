@@ -53,7 +53,7 @@ locations <- read.csv("station.csv") %>% # Site names and info for all parks
  mutate(StationID = str_extract(MonitoringLocationIdentifier,"[^\\-]+$")) 
 
 #Extract sites from lake parks spreadsheet
-sites_to_get <- locations$MonitoringLocationIdentifier 
+sites_to_get <- locations$MonitoringLocationIdentifier#[1:11] 
 
 
 #Read WQP Data 
@@ -120,6 +120,7 @@ df <- df %>%
  df <- df[order(-df$Depth), ] #this is for profile plots. It *seems* to not be impacting other plots. I really don't want to try to do this in js. 
 
 ojs_define(data = transpose(df))
+ojs_define(station = transpose(locations))
 ```
 
 
@@ -521,8 +522,10 @@ sitechoices = data.filter(function(inputdata) {
 //viewof site = Inputs.checkbox(sitechoices.map(d => d.Name),
 //{label: "Site:", unique: true, multiple: true})
 
+//can change back to names here: https://observablehq.com/@observablehq/input-checkbox
+//should also make an "all" 
 viewof site = Inputs.checkbox(
-  data.map(d => d.Name), 
+  sitechoices.map(d => d.Site), 
   {label: "Site:", unique: true, sort: true, multiple: true}
 )
 
@@ -532,6 +535,34 @@ viewof site = Inputs.checkbox(
 :::: panel-tabset
 ## Map
 <!--Inspired by https://github.com/kbvernon/hndsr-watersheds-->
+
+```{ojs}
+// Need to extract lists of latitude and longitude from staton.csv to make leaflet markers later.
+//the javascript "map" function just collapses the data into a single array. 
+
+lat = station.map(({Latitude:actualValue})=>actualValue);  //need to turn data into array (list of numbers to display on y-axis)
+      
+long = station.map(({Longitude:actualValue})=>actualValue); //list of dates for x axis
+          
+names = station.map(({glknid:actualValue})=>actualValue);
+```
+
+```{ojs}
+// Make pairs of lat long for each selected site
+  function makeArray(sitearray) { //makeArray is a function
+    let sets = [];
+    for (let s = 0; s <= sitearray.length; s ++) { //loops through the length of "names" to make sets
+      let pairs = [];
+      pairs[0] = sitearray[s];
+      pairs[1] = lat[s]
+      pairs[2] = long[s];
+      sets[s] = pairs};
+      return sets;
+  }
+list_of_pairs = [makeArray(names)][0]; //list of pairs is now an ARRAY of arrays, which will be used to make markers.    
+
+```
+
 ```{ojs}
 //Initiate leaflet map
 L = {
@@ -541,14 +572,9 @@ L = {
     document.head.appendChild(L._style = html`<link href=${href} rel=stylesheet>`);
   }
 
-  return L;
+  return L; //to call leaflet, use "L" (ie L.marker)
 };
 
-```
-
-```{ojs}
-//Upload geojson. This was obtained using an online converter (csv -> geojson) using a list of latitude, longitudes, and site names. 
-glknsites = d3.json("glknsites.geojson"); 
 ```
 
 
@@ -567,32 +593,21 @@ container = {
 ```
 
 ```{ojs}
+//Add tiles to the map. 
+//Currently using openstreetmap b/c it doesn't have the loading issue that stamen does. 
 
 glknParks = {
   
   let map = L.map(container);
   
   
-  const esri = 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community';
-
-  
- // const Esri_WorldImagery = L.tileLayer(
- // 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', 
-//  {
-//	  attribution: esri,
-//	  minZoom: 0,
-//  	maxZoom: 18,
- //   ext: 'png'
- // }).addTo(map);
-  
  var OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 	maxZoom: 19,
 	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
   
-  // button to toggle basemap layer selection
-  
-  map.setView([44.3, -90], 6);
+  //setView is my best estimation but should be fiddled with later
+  map.setView([44.7, -90], 8);
 
   return map; 
 
@@ -608,6 +623,8 @@ mutable results = []; //HERE
 ```
 
 ```{ojs}
+//Create icons. These can easily be replaced if you want to change color, size, shape, etc. 
+//waterdrop.png is from a free clipart site. 
 waterIcon = L.icon({
     iconUrl: 'waterdrop.png',
     iconSize:     [15, 20], // size of the icon
@@ -622,23 +639,21 @@ waterIcon2 = L.icon({
     popupAnchor:  [-5, -13] // point from which the popup should open relative to the iconAnchor
 });
 
-markers = new Array();
 
-geojson = {
+// indexOf returns index number if e exists, -1 otherwise.
+//This checks to see if marker is already in results list or not. 
+idx = (e) => { return results.indexOf(e.properties.Name); };
   
-
-// indexOf returns index number if e exists, -1 otherwise
-  const idx = (e) => { return results.indexOf(e.feature.properties.Name); };
-  
- const highlightFeature = (e) => {
+//this is just for popups
+highlightFeature = (e) => {
 
    // e.target.setStyle(styles.highlight); 
     //e.target.bringToFront();
     e.target.openPopup();
   
   };
-  
-  const resetHighlight = (e) => { 
+ //also just for popups 
+resetHighlight = (e) => { 
 
     //let q = (idx(e.target) < 0) ? styles.basic : styles.select;
     
@@ -647,145 +662,123 @@ geojson = {
   
   };
   
-  const toggleFeature = (e) => {
-  
-    
+//This is the important part!!
+toggleFeature = (e) => {
+    //see idx function above 
     const i = idx(e.target);
-    
     
     if (i > -1) { //if the selected point is already in the results list
             
-      results.splice(i, 1); //remove site from results list 
-      e.target.setIcon(waterIcon);
+     results.splice(i, 1); //remove site from results list and set icon to waterIcon
+     e.target.setIcon(waterIcon);
       
     } else {
-      //if it is not already there, put it there       
-      results.push(e.target.feature.properties.Name);
+      //if it is not already there, put it there and change icon       
+      results.push(e.target.properties.Name); 
       e.target.setIcon(waterIcon2);
-     // e.target.marker.setIcon(new waterIcon2);
+
     };
-          
+   
+  
+  set(viewof site, results);
+
   };
 
-  
-  const onEachFeature =  (feature, layer) => {
+// Makes markers 
+markers = {
+ var markers = {};
     
-    layer.on({
-      mouseover: highlightFeature,
-      mouseout: resetHighlight,
-      click: toggleFeature
-    });
+    for (var i = 0; i < 74; i++) { //need to replace 74 but putting a variable length here breaks it so I am afraid to. 
+      let id_name = [list_of_pairs[i][0]];
+      //This is in case inputs are selected when map is loaded.
+      //Untested: might break. 
+      function determineIcon(input) {
+        if (results.includes(input)) {
+          return waterIcon2
+          } else {
+          return waterIcon
+         }
+      }
+      //shorthand for this i
+      let name_id = list_of_pairs[i][0]
+      
+      markers[name_id] = new L.marker([list_of_pairs[i][1], list_of_pairs[i][2]],
+      {icon: determineIcon(list_of_pairs[i][0]),
+      options: {Name: list_of_pairs[i][0]}, //this may be unnecessary 
+      id: list_of_pairs[i][0]})  //also this 
+    //Add event listeners 
+      .on('mouseover', highlightFeature)
+      .on('mouseout', resetHighlight)
+      .on('click', toggleFeature)
+      .bindPopup(list_of_pairs[i][0])
+      
+      .addTo(glknParks);
+     //This part allows markers to be called by checkbox inputs by creating an object
+     //Where the key is the site name and the value is the marker. 
+     markers[name_id].properties = {};
+     markers[name_id].properties.Name = list_of_pairs[i][0];
     
       
-    
-  //   layer.on('click', function (e) {
-   //e.target.setIcon(new waterIcon2);
-    //}); //when this works get it to toggle back
-    
+    } //for loop close
+  
+  return markers;    
+}    
+
+
+```
+
+```{ojs}
+
+ site; // if site changes
+ 
+//Basically the same function as toggleFeature with some slight adjustements. 
+justSelected = () => {
+
+//TO ADD SITES  
+ if (site.length > 0) { //otherwise will throw "undefined", the bane of my existence 
+ //Figure out which sites are not in results. 
+ //Should just be one but it doesn't work unless it's in a loop.
+ //Maybe something to do with extracting the value from array (map might work) but 
+ //it's working so I'm not going to worry about it.
+  let difference1 = site.filter(x => results.indexOf(x) === -1);
+   for (var i = 0; i < difference1.length; i++) {
+      var mysite = difference1[i];
+      markers[mysite].setIcon(waterIcon2);
+      results.push(mysite); //put it into results to merge w/ sites selected from map. 
+   }
+ }
+ 
+//TO REOVE SITES
+//Basically the same process backwards. 
+//Figure out which sites are in results still, but not in site anymore:
+ let difference = results.filter(x => site.indexOf(x) === -1);
+ 
+//For each of those, change icon back and remove from results. 
+ if (difference.length > 0) {
+  for (var i = 0; i < difference.length; i++) { //might not need
+    var mysite = difference[i];
+    markers[mysite].setIcon(waterIcon);
+    results.splice(i, 1); 
   }
 
-  let layer = L.geoJSON(glknsites, {
-      onEachFeature: onEachFeature,
-      pointToLayer: function(feature,latlng){
-      return L.marker(latlng,{icon: waterIcon})
-      .bindPopup(feature.properties.Name);
-       //   markers.push(L.marker(latlng,{icon: waterIcon}) //was return
-      
-      }
-      
+ }
   
-  }).addTo(glknParks);
-  
-  markers.push(layer)
-  
-  return layer;
 
 }
 
-```
-
-<!-- THE REACTIONS -->
-
-```{ojs}
-
-mutable trigger = [0];
-
-```
-
-```{ojs}
-//| output: false
-
-geojson.on("click", (e) => { mutable trigger += 1; });
-
-```
-
-```{ojs}
-
-// Add site IDs to results variable
-
-displayResults = {
-
-  trigger;
-
-  let txt = [];
-  
-  if (results.length > 0) { txt.push(results.map(e => " " + e)) };
-  set(viewof site, results); 
-  d3.select(".results")
-    .selectAll("p")
-    .filter((d,i) => { return i == 0 })
-    .text(txt);
-
-};
-
+justSelected(); //always need to remember to call the function!!
 ```
 
 ```{ojs}
 // push results to viewof site (site input)
+//This is only called for toggleFeature when sites are clicked from map, 
+//NOT called when sites are selected from checkboxes (to prevent weirdness)
 function set(input, value) {
   input.value = value;
   input.dispatchEvent(new Event("input", {bubbles: true}));
 }
 
 ```
-
-```{r}
-# //| echo: false
-# //| output: false
-# //I think this syncs inputs and map markers. 
-# geojson.eachLayer(e => {
-#       
-#   let p = e.feature.properties;
-#   let i = site.indexOf(p.Name);
-#   
-#   if (site.length ) {
-#   
-#     
-#       if (i < 0) {
-#   
-#         e.target.setIcon(waterIcon2);
-#         results.push(p.Name);
-#         mutable trigger += 1;
-#         
-#   
-#     } else { 
-# 
-#       if (i > -1) {
-#       
-#         e.target.setIcon(waterIcon);
-#         result.splice(i, 1);
-#         mutable trigger -= 1;
-#       
-#       };
-#   
-#     };
-#   
-#   } else { };
-# 
-# });
-
-```
-
 
 ## Plots
 
@@ -850,115 +843,115 @@ viewof monthmax = Inputs.range(
 
 ```{ojs}
 //| echo: false
+//| classes: plotly_warning
 {
-  if (typeof varname[0] !== "undefined") {
-    return var_Plot(varname[0]);
-  } else {
-    return("")
-  }
-
+if (typeof varname[0] !== "undefined") {
+  return var_Plot(varname[0]);
+} else{
+  return 'Please select a variable to display plots.'
+}
 }
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 box_Plot(varname[0])
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 var_Plot(varname[1]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 box_Plot(varname[1]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 var_Plot(varname[2]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 box_Plot(varname[2]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 var_Plot(varname[3]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 box_Plot(varname[3]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 var_Plot(varname[4]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 box_Plot(varname[4]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 var_Plot(varname[5]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 box_Plot(varname[5]);
 ```
 
 ```{ojs}
 //| echo: false
-//| message: false
+//| classes: plotly_plots
 var_Plot(varname[6]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 box_Plot(varname[6]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 var_Plot(varname[7]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 box_Plot(varname[7]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 var_Plot(varname[8]);
 ```
 
 ```{ojs}
 //| echo: false
-//| warning: false
+//| classes: plotly_plots
 box_Plot(varname[8]);
 ```
 

@@ -1,13 +1,16 @@
 ---
 format:
   html:
-    embed-resources: false
+    embed-resources: true
     page-layout: custom
     theme: style.scss
 editor: source
 echo: false
 ---
 <!--head-->
+```{ojs}
+window.alert("Data disclaimer here");
+```
 
 ```{=html}
 <div class="banner">
@@ -17,15 +20,27 @@ echo: false
   </p>
 </div>
 
-
-
 ```
-<!--\head-->
+
+```{ojs}
+//|output: false
+{
+var imgs = document.getElementsByClassName('myClass1');
+
+  for (var i = 0; i < imgs.length; i++) {
+    var num = Math.floor(Math.random() * 4 + 1);
+    imgs[i].src = 'placeholder' + num + '.jpg';
+    imgs[i].alt = imgs[i].src;
+  }
+ // return imgs
+}
+```
+
 
 ```{=html}
 <div class = "headerImage">
   <p>
-  <img src="placeholder1.jpg" alt="Placeholder alt" width=3000>
+  <img src="" class="myClass1" alt="Placeholder alt" width=3000>
   </p>
 </div>
 ```
@@ -38,6 +53,7 @@ echo: false
 </div>
 ```
 
+<!--\head-->
 
 ```{r echo = FALSE, message = FALSE, include = FALSE}
 
@@ -53,7 +69,7 @@ locations <- read.csv("station.csv") %>% # Site names and info for all parks
  mutate(StationID = str_extract(MonitoringLocationIdentifier,"[^\\-]+$")) 
 
 #Extract sites from lake parks spreadsheet
-sites_to_get <- locations$MonitoringLocationIdentifier#[1:11] 
+sites_to_get <- locations$MonitoringLocationIdentifier
 
 
 #Read WQP Data 
@@ -113,6 +129,10 @@ df <- merge(glknwqp, locations, by.x = "Site", by.y = "glknid", all.x = TRUE)
 df <- df %>% 
     mutate(Value = as.numeric(Value)) %>% 
     mutate(Date = as.Date(DateTime)) %>% 
+    mutate(Hour = hour(DateTime)) %>% 
+    mutate(Minute = minute(DateTime)) %>% 
+    mutate(Time = paste0(Hour, ":", Minute, " (UTC)")) %>% 
+    select(-c(Hour, Minute, DateTime, MonitoringLocationIdentifier, Activity_ID)) %>%  
     mutate(Date = as.character(Date)) %>% 
     mutate(Year = year(Date)) %>% 
     mutate(Month = month(Date)) 
@@ -122,8 +142,6 @@ df <- df %>%
 ojs_define(data = transpose(df))
 ojs_define(station = transpose(locations))
 ```
-
-
 
 ```{ojs}
 //| echo: false
@@ -142,13 +160,37 @@ filtered = data.filter(function(waterFilter) {
          depthmax >= waterFilter.Depth &&
          monthhmin <= waterFilter.Month &&
          monthmax >= waterFilter.Month &&
-       //  park.includes(waterFilter.Park) && //fix
          varname.includes(waterFilter.Variable) &&
          site.includes(waterFilter.Name);
 })
 ```
 
 
+
+```{ojs}
+//|output: false
+colors =  {  
+    if (color_input == "default") {
+      return ['#1f77b4',  '#ff7f0e',  '#2ca02c',  '#d62728',  '#9467bd',  '#8c564b',  '#e377c2',  '#7f7f7f',  '#bcbd22',  '#17becf',
+                    '#1f77b4',  '#ff7f0e',  '#2ca02c',  '#d62728',  '#9467bd',  '#8c564b',  '#e377c2',  '#7f7f7f',  '#bcbd22',  '#17becf'];  
+    } else if (color_input == "natural")  {
+      return ['#378F8D', '#BADAF5', '#E5E2B2', '#C9AADB', '#AB5B26', '#00295B', '#006B46', '#BF7C9C', '#DBB600', '#F59E28',
+      '#378F8D', '#BADAF5', '#E5E2B2', '#C9AADB', '#AB5B26', '#00295B', '#006B46', '#BF7C9C', '#DBB600', '#F59E28'];
+    } else if (color_input == "roygbiv") {
+      return['#F30109', '#FF6C00', '#FFEC00', '#00E526', '#3700E6', '#6B00E5', '#BC1EE6'];
+    } else if (color_input == "sunset") {
+      return['#D52D00', '#EF7627', '#FF9A56', '#D162A4', '#B55690', '#A30262'];
+    } else if (color_input == "greyscale") {
+      return['#2B2B2B', '#D4D4D4', '#545454', '#C9C9C9', '#828282', '#ADADAD'];
+    } else if (color_input == "NPS") {
+      return['#2C4A1E', '#C56C39', '#B9B6C1', '#0F4F7E', '#8E9A4C', '#000000'];
+    } else if (color_input == "viridis") {
+      return['#440154', '#FDE725', '#6DCD59', '#3E4A89', '#1F9E89', '#482878', '#B4DE2C', '#31688E', '#26828E', '#35B779'];
+    }
+  }
+
+//colors(color_input);
+```
 <!---
 Time Series
 -->
@@ -196,7 +238,9 @@ function var_Plot(var_name) {
        //s   yaxis: ynames[i],
           type: 'scatter',
           mode: 'markers',
-          marker: {autocolorscale: false, color: 5}, //I will be shocked if this works but it's the right idea}
+          marker: {
+          color: colors[holdercount] 
+        }, 
           name: thissite
         };
         
@@ -217,9 +261,9 @@ function var_Plot(var_name) {
           family: 'Arial',
           size: 14 }
       },
-      autosize: false,
-      width: 700,
-      height: 1000/varname.length,
+      autosize: true,
+   //   width: 600,
+     // height: 1000/varname.length,
       margin: {
         l: 50,
         r: 50,
@@ -231,7 +275,7 @@ function var_Plot(var_name) {
 
   
     const div = DOM.element("div"); //plots
-    Plotly.newPlot(div, data, layout);
+    Plotly.newPlot(div, data, layout,  {responsive: true});
     return div; 
   
     
@@ -263,6 +307,8 @@ function box_Plot(var_name) {
       })
       
   let holder = [] 
+
+  
   for (let i = 0; i <= site.length; i ++) {
     let thissite = site[i];
     
@@ -282,11 +328,13 @@ function box_Plot(var_name) {
       x: eachvar_x,
       type: 'box',
       name: thissite,
-      boxpoints: false
+      boxpoints: false,
+      marker: {
+        color: colors[i] 
+        }
     };
     
     holder[i] = eachtrace;
-    
 } // if not undefined s close
 } //i loop close
 
@@ -294,9 +342,9 @@ var data = holder;
 
 var layout = {
 
-   autosize: false,
-      width: 700,
-      height: 1000/varname.length,
+   autosize: true,
+     // width: 600,
+      //height: 1000/varname.length, //maybe make if varname.length == 1 {height = 800} or something
       margin: {
         l: 50,
         r: 50,
@@ -314,7 +362,7 @@ var layout = {
   };
 
 const div = DOM.element('div');
-Plotly.newPlot(div, data, layout);
+Plotly.newPlot(div, data, layout, {responsive: true});
 return div; 
 
 } // not undefined var close 
@@ -322,7 +370,9 @@ return div;
 } // function close
 ```
 
-<!-- Profile Plot -->
+<!-- 
+  Profile Plot 
+-->
 
 ```{ojs}
 profileData = data.filter(function(waterFilter) {
@@ -332,13 +382,12 @@ profileData = data.filter(function(waterFilter) {
 })
 ```
 
+
 ```{ojs}
 //|echo: false
 
 function profile_Plot(var_name) {
-  let colors = ['#1f77b4',  '#ff7f0e',  '#2ca02c',  '#d62728',  '#9467bd',  '#8c564b',  '#e377c2',  '#7f7f7f',  '#bcbd22',  '#17becf',
-                '#1f77b4',  '#ff7f0e',  '#2ca02c',  '#d62728',  '#9467bd',  '#8c564b',  '#e377c2',  '#7f7f7f',  '#bcbd22',  '#17becf',
-                '#1f77b4',  '#ff7f0e',  '#2ca02c',  '#d62728',  '#9467bd',  '#8c564b',  '#e377c2',  '#7f7f7f',  '#bcbd22',  '#17becf']   
+
   //limitation- can only handle 30 traces 
   //here is where I could make a custom color scheme if I was feeling clever
 
@@ -421,7 +470,7 @@ function profile_Plot(var_name) {
         marker: {
           symbol: 'square',
           size: 10,
-          color: colors[holdercount]
+          color: colors[holdercount] 
         },
          hovertemplate: 'Secchi Depth: %{y}m' +
                         '<br>'+thissite+'<br>' +
@@ -496,45 +545,11 @@ function getsecchi(site, date) {
 }
 ```
 
-
-
-<!---
-Outputs
--->
-
-
-:::: panel-sidebar
-```{ojs}
-//| echo: false
-
-//Park selection
-viewof park = Inputs.select(
-  ["SACN", "ISRO", "VOYA", "SLBE", "INDU", "APIS", "PIRO"], 
-  { value: ["ISRO"], multiple: true, label: "Park:" }
-)
-
-// Filter so that only sites in selected parks are displayed
-sitechoices = data.filter(function(inputdata) {
-  return park.includes(inputdata.Park);
-})
-
-// Select site
-//viewof site = Inputs.checkbox(sitechoices.map(d => d.Name),
-//{label: "Site:", unique: true, multiple: true})
-
-//can change back to names here: https://observablehq.com/@observablehq/input-checkbox
-//should also make an "all" 
-viewof site = Inputs.checkbox(
-  sitechoices.map(d => d.Site), 
-  {label: "Site:", unique: true, sort: true, multiple: true}
-)
-
-```
-::::
-
-:::: panel-tabset
-## Map
+<!-- 
+  MAP FUNCTIONS 
+--> 
 <!--Inspired by https://github.com/kbvernon/hndsr-watersheds-->
+<!--With help from https://stackoverflow.com/questions/25683871/assign-id-to-marker-in-leaflet-->
 
 ```{ojs}
 // Need to extract lists of latitude and longitude from staton.csv to make leaflet markers later.
@@ -544,7 +559,7 @@ lat = station.map(({Latitude:actualValue})=>actualValue);  //need to turn data i
       
 long = station.map(({Longitude:actualValue})=>actualValue); //list of dates for x axis
           
-names = station.map(({glknid:actualValue})=>actualValue);
+names = station.map(({Name:actualValue})=>actualValue);
 ```
 
 ```{ojs}
@@ -564,65 +579,14 @@ list_of_pairs = [makeArray(names)][0]; //list of pairs is now an ARRAY of arrays
 ```
 
 ```{ojs}
-//Initiate leaflet map
-L = {
-  const L = await require("leaflet/dist/leaflet.js");
-  if (!L._style) {
-    const href = await require.resolve("leaflet/dist/leaflet.css");
-    document.head.appendChild(L._style = html`<link href=${href} rel=stylesheet>`);
-  }
-
-  return L; //to call leaflet, use "L" (ie L.marker)
-};
-
-```
-
-
-```{ojs}
-//Container for leaflet map to go into. 
-container = {
-
-  let x = d3.create("div")
-  
-  x.attr("style", `width:100%;height:${window.outerHeight * 0.65}px`);
-
-  return x.node();
-
-}
-
-```
-
-```{ojs}
-//Add tiles to the map. 
-//Currently using openstreetmap b/c it doesn't have the loading issue that stamen does. 
-
-glknParks = {
-  
-  let map = L.map(container);
-  
-  
- var OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-	maxZoom: 19,
-	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
-  
-  //setView is my best estimation but should be fiddled with later
-  map.setView([44.7, -90], 8);
-
-  return map; 
-
-};
-
-```
-
-```{ojs}
-
+//|output: false
 // results variable for tracking site selections
 mutable results = []; //HERE
 
 ```
 
 ```{ojs}
+
 //Create icons. These can easily be replaced if you want to change color, size, shape, etc. 
 //waterdrop.png is from a free clipart site. 
 waterIcon = L.icon({
@@ -728,8 +692,8 @@ markers = {
 ```
 
 ```{ojs}
-
- site; // if site changes
+//|output: false
+// site; // if site changes
  
 //Basically the same function as toggleFeature with some slight adjustements. 
 justSelected = () => {
@@ -770,6 +734,7 @@ justSelected(); //always need to remember to call the function!!
 ```
 
 ```{ojs}
+
 // push results to viewof site (site input)
 //This is only called for toggleFeature when sites are clicked from map, 
 //NOT called when sites are selected from checkboxes (to prevent weirdness)
@@ -779,6 +744,105 @@ function set(input, value) {
 }
 
 ```
+
+```{ojs}
+
+//Initiate leaflet map
+L = {
+  const L = await require("leaflet/dist/leaflet.js");
+  if (!L._style) {
+    const href = await require.resolve("leaflet/dist/leaflet.css");
+    document.head.appendChild(L._style = html`<link href=${href} rel=stylesheet>`);
+  }
+
+  return L; //to call leaflet, use "L" (ie L.marker)
+};
+
+```
+
+```{ojs}
+
+//Add tiles to the map. 
+//Currently using openstreetmap b/c it doesn't have the loading issue that stamen does. 
+
+glknParks = {
+  
+  let map = L.map(container);
+  
+  
+ var OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+	maxZoom: 19,
+	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+  
+  //setView is my best estimation but should be fiddled with later
+  map.setView([44.8, -90], 7);
+
+  return map; 
+
+};
+
+```
+
+<!---
+Outputs
+-->
+
+
+:::: panel-sidebar
+```{ojs}
+//| echo: false
+
+viewof color_input = Inputs.select(
+  ["default", "natural", "NPS", "sunset", "roygbiv", "greyscale", "viridis"],
+  {value: "default", label: "Color pallete:"}
+)
+//Park selection
+viewof park = Inputs.select(
+  ["SACN", "ISRO", "VOYA", "SLBE", "INDU", "APIS", "PIRO"], 
+  { value: ["ISRO"], multiple: true, label: "Park:" }
+)
+
+// Filter so that only sites in selected parks are displayed
+sitechoices = data.filter(function(inputdata) {
+  return park.includes(inputdata.Park);
+})
+
+// Select site
+//viewof site = Inputs.checkbox(sitechoices.map(d => d.Name),
+//{label: "Site:", unique: true, multiple: true})
+
+//can change back to names here: https://observablehq.com/@observablehq/input-checkbox
+//should also make an "all" option
+viewof site = Inputs.checkbox(
+  sitechoices.map(d => d.Name), 
+  {label: "Site:", unique: true, sort: true, multiple: true}
+)
+
+
+```
+::::
+
+
+:::: panel-tabset
+
+## Map
+
+```{ojs}
+//Container for leaflet map to go into. 
+container = {
+
+  let x = d3.create("div")
+  
+  x.attr("style", `width:100%;height:${window.outerHeight * 0.65}px`);
+
+  return x.node();
+
+}
+
+```
+
+
 
 ## Plots
 
@@ -839,7 +903,6 @@ viewof monthmax = Inputs.range(
 
 
 ```
-
 
 ```{ojs}
 //| echo: false
@@ -954,7 +1017,7 @@ var_Plot(varname[8]);
 //| classes: plotly_plots
 box_Plot(varname[8]);
 ```
-
+:::
 
 ```{=html}
 <h3> Data Preview and Download </h3>
@@ -997,7 +1060,7 @@ Inputs.table(filtered)
   return buttondiv; 
   }
 ```
-:::
+
 
 ## Profiles
 ```{ojs}

@@ -1,5 +1,4 @@
 
-
 /*-- scss:rules --*/
 
 .banner {
@@ -14,10 +13,12 @@
   margin: 0px;
 }
 
+
 .headerImage {
-  img {
+img {
     max-width: 100%;
     height: auto;
+    position: realative
   }
 }
 
@@ -27,9 +28,22 @@
 
 .panel-sidebar {
   color: black;
-
   margin: 10px;
   width: 100%;
+  background-color: gray70 !important;
 }
 
+.panel-input {
+  color: black;
+  background-color: gray70 !important;
+}
 
+.plotly_plots {
+  color: white !important;
+  font-size: 0px;
+}
+
+.plotly_warning {
+  font-size: 30px;
+  color: black;
+}

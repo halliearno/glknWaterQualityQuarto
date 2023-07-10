@@ -7,20 +7,26 @@ format:
 editor: source
 echo: false
 ---
-<!--head-->
+
 ```{ojs}
-window.alert("Data disclaimer here");
+correct_password = "*********"
 ```
+
+```{ojs}
+window.alert("This visualizer is in draft form. Please do not distribute. See email for password instructions.");
+```
+<!--head-->
 
 ```{=html}
 <div class="banner">
   <p>
-    <img src = "logo.png" style="vertical-align:middle" height="50">
+    <img src = "images/logo.png" style="vertical-align:middle" height="50">
     National Park Service
   </p>
 </div>
 
 ```
+
 
 ```{ojs}
 //|output: false
@@ -29,7 +35,7 @@ var imgs = document.getElementsByClassName('myClass1');
 
   for (var i = 0; i < imgs.length; i++) {
     var num = Math.floor(Math.random() * 4 + 1);
-    imgs[i].src = 'placeholder' + num + '.jpg';
+    imgs[i].src = 'images/placeholder' + num + '.jpg';
     imgs[i].alt = imgs[i].src;
   }
  // return imgs
@@ -48,7 +54,7 @@ var imgs = document.getElementsByClassName('myClass1');
 ```{=html}
 <div class = "title">
   <h1>
-  GLKN Water Quality Visualizer
+  DRAFT GLKN Water Quality Visualizer
   </h1>
 </div>
 ```
@@ -65,8 +71,8 @@ library(dataRetrieval)
 library(tidyverse)
 
 #Filepaths for site names and site metadata
-locations <- read.csv("station.csv") %>% # Site names and info for all parks 
- mutate(StationID = str_extract(MonitoringLocationIdentifier,"[^\\-]+$")) 
+locations <- read.csv("GLKNStation.csv") %>% # Site names and info for all parks 
+ mutate(GLKNStationID = str_extract(MonitoringLocationIdentifier,"[^\\-]+$"))
 
 #Extract sites from lake parks spreadsheet
 sites_to_get <- locations$MonitoringLocationIdentifier
@@ -119,7 +125,7 @@ glknwqp <- dt %>% select(c("ActivityIdentifier",
 
 
 # Add lat long
-locations <- locations %>% select(StationID, LatitudeMeasure, LongitudeMeasure, MonitoringLocationName)
+locations <- locations %>% select(GLKNStationID, LatitudeMeasure, LongitudeMeasure, StationName)
 
 colnames(locations) <- c("glknid", "Latitude", "Longitude", "Name")
 
@@ -140,7 +146,7 @@ df <- df %>%
  df <- df[order(-df$Depth), ] #this is for profile plots. It *seems* to not be impacting other plots. I really don't want to try to do this in js. 
 
 ojs_define(data = transpose(df))
-ojs_define(station = transpose(locations))
+ojs_define(GLKNStation = transpose(locations))
 ```
 
 ```{ojs}
@@ -150,16 +156,17 @@ Plotly = require("https://cdn.plot.ly/plotly-2.16.1.min.js")
 
 ```{ojs}
 //| echo: false
-
+//| output: false
+//| 
 // Filter based on inputs.
 
 filtered = data.filter(function(waterFilter) {
-  return yearsmin <= waterFilter.Year &&
-         yearsmax >= waterFilter.Year &&
-         depthmin <= waterFilter.Depth &&
-         depthmax >= waterFilter.Depth &&
-         monthhmin <= waterFilter.Month &&
-         monthmax >= waterFilter.Month &&
+  return yearIn[0] <= waterFilter.Year &&
+         yearIn[1] >= waterFilter.Year &&
+         depthIn[0] <= waterFilter.Depth &&
+         depthIn[1] >= waterFilter.Depth &&
+         monthIn[0] <= waterFilter.Month &&
+         monthIn[1] >= waterFilter.Month &&
          varname.includes(waterFilter.Variable) &&
          site.includes(waterFilter.Name);
 })
@@ -197,8 +204,10 @@ Time Series
 
 ```{ojs}
 //| echo: false
-//| 
+//|output: false
+
 function var_Plot(var_name) {
+  if (password === correct_password) {
   let holder = [] 
   let holdercount = 0 
   
@@ -261,6 +270,9 @@ function var_Plot(var_name) {
           family: 'Arial',
           size: 14 }
       },
+       yaxis: {
+        title: 'Value'
+      }, //HERE
       autosize: true,
    //   width: 600,
      // height: 1000/varname.length,
@@ -281,7 +293,7 @@ function var_Plot(var_name) {
     
    } // if not undefined i close
     
-
+  } //if close
 
   } // function close
   
@@ -295,9 +307,10 @@ Boxplot
 
 ```{ojs}
 //|echo: false
+//|output: false
 
 function box_Plot(var_name) {
-
+  if (password === correct_password) {
   let thisvar = var_name;
     
     if (typeof thisvar !== "undefined") { //make sure it is not undefined to avoid errors
@@ -320,12 +333,17 @@ function box_Plot(var_name) {
    let eachvar_y = 
       df.map(({Value:actualValue})=>actualValue);
       
-    let eachvar_x = 
-      df.map(({Month:actualValue})=>actualValue);
+    function get_x(toggle_boxplot) {
+      if (toggle_boxplot == true) {
+         return df.map(({Year:actualValue})=>actualValue);
+      } else {
+        return df.map(({Month:actualValue})=>actualValue);
+      }
+    }
     
     let eachtrace  = {
       y: eachvar_y,
-      x: eachvar_x,
+      x: get_x(toggle_boxplot),
       type: 'box',
       name: thissite,
       boxpoints: false,
@@ -358,6 +376,9 @@ var layout = {
           family: 'Arial',
           size: 14 }
       },
+       yaxis: {
+        title: 'Value'
+      }, //HERE
   boxmode: 'group'
   };
 
@@ -366,7 +387,7 @@ Plotly.newPlot(div, data, layout, {responsive: true});
 return div; 
 
 } // not undefined var close 
-
+} //if password close
 } // function close
 ```
 
@@ -375,6 +396,7 @@ return div;
 -->
 
 ```{ojs}
+//|output: false
 profileData = data.filter(function(waterFilter) {
   return year == waterFilter.Year &&
          month >= waterFilter.Month;
@@ -385,9 +407,9 @@ profileData = data.filter(function(waterFilter) {
 
 ```{ojs}
 //|echo: false
-
+//|output: false
 function profile_Plot(var_name) {
-
+  if (password === correct_password) {
   //limitation- can only handle 30 traces 
   //here is where I could make a custom color scheme if I was feeling clever
 
@@ -497,6 +519,12 @@ function profile_Plot(var_name) {
           family: 'Arial',
           size: 14 }
       },
+       xaxis: {
+        title: 'Value'
+      },
+       yaxis: {
+        title: 'Depth'
+      }, //HERE
       autosize: false,
       width: 400,
       height: 700,
@@ -517,13 +545,14 @@ function profile_Plot(var_name) {
     //return secchiholder
    } // if not undefined i close
     
-
+  } //if password close
 
 
 } // function close
 ```
 
 ```{ojs}
+//|output: false
 function getsecchi(site, date) {
       let thissecchi = profileData.filter(function(secchiFilter){
         return site.includes(secchiFilter.Name) &&
@@ -552,14 +581,15 @@ function getsecchi(site, date) {
 <!--With help from https://stackoverflow.com/questions/25683871/assign-id-to-marker-in-leaflet-->
 
 ```{ojs}
+//|output: false
 // Need to extract lists of latitude and longitude from staton.csv to make leaflet markers later.
 //the javascript "map" function just collapses the data into a single array. 
 
-lat = station.map(({Latitude:actualValue})=>actualValue);  //need to turn data into array (list of numbers to display on y-axis)
+lat = GLKNStation.map(({Latitude:actualValue})=>actualValue);  //need to turn data into array (list of numbers to display on y-axis)
       
-long = station.map(({Longitude:actualValue})=>actualValue); //list of dates for x axis
+long = GLKNStation.map(({Longitude:actualValue})=>actualValue); //list of dates for x axis
           
-names = station.map(({Name:actualValue})=>actualValue);
+names = GLKNStation.map(({Name:actualValue})=>actualValue);
 ```
 
 ```{ojs}
@@ -590,14 +620,14 @@ mutable results = []; //HERE
 //Create icons. These can easily be replaced if you want to change color, size, shape, etc. 
 //waterdrop.png is from a free clipart site. 
 waterIcon = L.icon({
-    iconUrl: 'waterdrop.png',
+    iconUrl: 'images/waterdrop.png',
     iconSize:     [15, 20], // size of the icon
     iconAnchor:   [5, 12], // point of the icon which will correspond to marker's location
     popupAnchor:  [-3, -7] // point from which the popup should open relative to the iconAnchor
 });
 
 waterIcon2 = L.icon({
-    iconUrl: 'waterdrop.png',
+    iconUrl: 'images/waterdrop.png',
     iconSize:     [28.6, 37.2], // size of the icon
     iconAnchor:   [10, 24], // point of the icon which will correspond to marker's location
     popupAnchor:  [-5, -13] // point from which the popup should open relative to the iconAnchor
@@ -650,6 +680,7 @@ toggleFeature = (e) => {
 
 // Makes markers 
 markers = {
+ if (password === correct_password) {
  var markers = {};
     
     for (var i = 0; i < 74; i++) { //need to replace 74 but putting a variable length here breaks it so I am afraid to. 
@@ -685,7 +716,8 @@ markers = {
       
     } //for loop close
   
-  return markers;    
+  return markers;
+ } //if close
 }    
 
 
@@ -760,6 +792,7 @@ L = {
 
 ```
 
+
 ```{ojs}
 
 //Add tiles to the map. 
@@ -787,20 +820,23 @@ glknParks = {
 <!---
 Outputs
 -->
-
+```{ojs}
+viewof password = Inputs.text({label: ".   Password:", placeholder: "check email for instructions"})
+```
 
 :::: panel-sidebar
+
 ```{ojs}
 //| echo: false
 
 viewof color_input = Inputs.select(
-  ["default", "natural", "NPS", "sunset", "roygbiv", "greyscale", "viridis"],
+  ["default", "natural", "NPS", "roygbiv", "greyscale", "viridis"],
   {value: "default", label: "Color pallete:"}
 )
 //Park selection
-viewof park = Inputs.select(
-  ["SACN", "ISRO", "VOYA", "SLBE", "INDU", "APIS", "PIRO"], 
-  { value: ["ISRO"], multiple: true, label: "Park:" }
+viewof park = Inputs.checkbox(
+  ["SACN", "MISS", "ISRO", "VOYA", "SLBE", "INDU", "PIRO", "APIS"], 
+  { value: ["SACN"], multiple: true, label: "Park:" }
 )
 
 // Filter so that only sites in selected parks are displayed
@@ -821,12 +857,10 @@ viewof site = Inputs.checkbox(
 
 
 ```
-::::
 
+##
 
-:::: panel-tabset
-
-## Map
+<i> Please select a site from checkboxes or on the map.  </i>
 
 ```{ojs}
 //Container for leaflet map to go into. 
@@ -842,7 +876,10 @@ container = {
 
 ```
 
+::::
 
+
+:::: panel-tabset
 
 ## Plots
 
@@ -850,8 +887,6 @@ container = {
 ```{ojs}
 //|panel: input
 
-
-import {rangeSlider} from "@mootari/range-slider@1312"
 
 //Variable selection
 viewof varname = Inputs.select(
@@ -863,46 +898,31 @@ viewof varname = Inputs.select(
 
 ```{ojs}
 //|panel: input
-
-// Minimum year slider
-viewof yearsmin = Inputs.range(
-  [2009, 2022], 
-  { value: 2009, step: 1, label: "Min Year:" }
-)
-
-// Maximum year slider
-viewof yearsmax = Inputs.range(
-  [2009, 2023], 
-  { value: 2022, step: 1, label: "Max Year:" }
-)
-
-// Minimum depth slider
-viewof depthmin = Inputs.range(
-  [0, 50], 
-  { value: 0, step: 0.5, label: "Min Depth:" }
-)
-
-// Maximum depth slider
-viewof depthmax = Inputs.range(
-  [0, 50], 
-  { value: 50, step: 0.5, label: "Max Depth:" }
-)
-
-// Maximum month slider
-viewof monthhmin = Inputs.range(
-  [1, 12], 
-  { value: 1, step: 1, label: "Min month:" }
-)
-
-// Maximum month slider
-viewof monthmax = Inputs.range(
-  [1, 12], 
-  { value: 12, step: 1, label: "Max month:" }
-)
+import {interval} from '@mootari/range-slider'
 
 
+viewof yearIn = interval([2005, 2023], {
+  step: 1,
+  value: [2005, 2023],
+  label: 'Years',
+})
+
+viewof monthIn = interval([1, 12], {
+  step: 1,
+  value: [1, 12],
+  label: 'Months',
+})
+
+viewof depthIn = interval([0, 50], {
+  step: 0.5,
+  value: [0, 50],
+  label: 'Depth (m)'
+})
+
+viewof toggle_boxplot = Inputs.toggle({label: "Boxplot by Year", value: true})
 
 ```
+
 
 ```{ojs}
 //| echo: false
@@ -1049,6 +1069,8 @@ button = (data, filename = 'data.csv') => {
 
 ```{ojs}
 //| echo: false
+{
+if (password === correct_password) {
 Inputs.table(filtered)
 
 
@@ -1059,6 +1081,9 @@ Inputs.table(filtered)
   buttondiv.appendChild(csvBtn);
   return buttondiv; 
   }
+  
+}
+}
 ```
 
 
@@ -1093,5 +1118,12 @@ profile_Plot("Specific conductance")
 profile_Plot("pH")
 ```
 :::
+
+## Information
+```{=html}
+<h3> Learn More </h3>
+<p> For the water quality data collection protocol, see <a href = "https://irma.nps.gov/DataStore/Reference/Profile/2290010">IRMA</a> </p>
+<p> For more informtation about Great Lakes Inventory and Monitoring, see <a href= "https://www.nps.gov/im/glkn/index.htm"> www.nps.gov/im/glkn/</a> </p>
+```
 
 ::::

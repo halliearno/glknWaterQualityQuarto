@@ -1,20 +1,19 @@
 ---
 format:
   html:
-    embed-resources: true
+    embed-resources: false
     page-layout: custom
     theme: style.scss
+    minimal: false
 editor: source
 echo: false
 ---
 
 ```{ojs}
-correct_password = "*********"
+correct_password = "glkn2023"
+password = "glkn2023"
 ```
 
-```{ojs}
-window.alert("This visualizer is in draft form. Please do not distribute. See email for password instructions.");
-```
 <!--head-->
 
 ```{=html}
@@ -802,12 +801,31 @@ glknParks = {
   
   let map = L.map(container);
   
-  
+  var lidarBase = L.tileLayer.wms(
+'https://elevation.nationalmap.gov/arcgis/services/3DEPElevation/ImageServer/WMSServer?',
+
+    {
+        layers: '3DEPElevation:Hillshade Gray',
+        className: 'lidarBase',
+        attribution: 'U.S. Geological Survey National Map - 3D Elevation Program Lidar'
+    }
+);
+
  var OpenStreetMap_Mapnik = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 	maxZoom: 19,
 	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
   
+   L.control.layers(
+    {
+      "Open Street Map": OpenStreetMap_Mapnik,
+      "LiDAR": lidarBase
+    },
+    null,
+    {position: 'topleft'}
+  ).addTo(map);
+  
+  L.control.scale().addTo(map);
   //setView is my best estimation but should be fiddled with later
   map.setView([44.8, -90], 7);
 
@@ -820,14 +838,19 @@ glknParks = {
 <!---
 Outputs
 -->
-```{ojs}
-viewof password = Inputs.text({label: ".   Password:", placeholder: "check email for instructions"})
+```{r}
+# ```{ojs}
+# //|output: false
+# //|include: false
+# viewof password = Inputs.text({label: ".   Password:", placeholder: "check email for instructions"})
+# ```
 ```
+::::: {.grid}
+:::: {.g-col-3}
 
-:::: panel-sidebar
+::: {.panel-sidebar}
 
 ```{ojs}
-//| echo: false
 
 viewof color_input = Inputs.select(
   ["default", "natural", "NPS", "roygbiv", "greyscale", "viridis"],
@@ -858,7 +881,8 @@ viewof site = Inputs.checkbox(
 
 ```
 
-##
+
+## Map
 
 <i> Please select a site from checkboxes or on the map.  </i>
 
@@ -876,10 +900,12 @@ container = {
 
 ```
 
+
+:::
 ::::
 
-
-:::: panel-tabset
+::::: {.g-col-9}
+:::: {.panel-tabset}
 
 ## Plots
 
@@ -1069,9 +1095,10 @@ button = (data, filename = 'data.csv') => {
 
 ```{ojs}
 //| echo: false
-{
-if (password === correct_password) {
-Inputs.table(filtered)
+//{
+//if (password === correct_password) {
+
+  Inputs.table(filtered)
 
 
 {const buttondiv = DOM.element('buttondiv');
@@ -1082,8 +1109,8 @@ Inputs.table(filtered)
   return buttondiv; 
   }
   
-}
-}
+//}
+//}
 ```
 
 
@@ -1127,3 +1154,7 @@ profile_Plot("pH")
 ```
 
 ::::
+
+:::::
+
+:::::

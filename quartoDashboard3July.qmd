@@ -10,8 +10,8 @@ echo: false
 ---
 
 ```{ojs}
-correct_password = "glkn2023"
-password = "glkn2023"
+correct_password = "********"
+password = "********"
 ```
 
 <!--head-->

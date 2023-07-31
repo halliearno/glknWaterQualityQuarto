@@ -10,8 +10,8 @@ echo: false
 ---
 
 ```{ojs}
-correct_password = "********"
-password = "********"
+correct_password = "glkn2023"
+password = "glkn2023"
 ```
 
 <!--head-->
@@ -29,6 +29,7 @@ password = "********"
 
 ```{ojs}
 //|output: false
+//This code chunk returns a random image (currently placeholders) on load
 {
 var imgs = document.getElementsByClassName('myClass1');
 
@@ -37,7 +38,7 @@ var imgs = document.getElementsByClassName('myClass1');
     imgs[i].src = 'images/placeholder' + num + '.jpg';
     imgs[i].alt = imgs[i].src;
   }
- // return imgs
+
 }
 ```
 
@@ -74,7 +75,7 @@ locations <- read.csv("GLKNStation.csv") %>% # Site names and info for all parks
  mutate(GLKNStationID = str_extract(MonitoringLocationIdentifier,"[^\\-]+$"))
 
 #Extract sites from lake parks spreadsheet
-sites_to_get <- locations$MonitoringLocationIdentifier
+sites_to_get <- locations$MonitoringLocationIdentifier[1:15]
 
 
 #Read WQP Data 
@@ -124,9 +125,9 @@ glknwqp <- dt %>% select(c("ActivityIdentifier",
 
 
 # Add lat long
-locations <- locations %>% select(GLKNStationID, LatitudeMeasure, LongitudeMeasure, StationName)
+locations <- locations %>% select(GLKNStationID, LatitudeMeasure, LongitudeMeasure, StationName, Park)
 
-colnames(locations) <- c("glknid", "Latitude", "Longitude", "Name")
+colnames(locations) <- c("glknid", "Latitude", "Longitude", "Name", "Park")
 
 
 df <- merge(glknwqp, locations, by.x = "Site", by.y = "glknid", all.x = TRUE)
@@ -145,8 +146,9 @@ df <- df %>%
  df <- df[order(-df$Depth), ] #this is for profile plots. It *seems* to not be impacting other plots. I really don't want to try to do this in js. 
 
 ojs_define(data = transpose(df))
-ojs_define(GLKNStation = transpose(locations))
+ojs_define(station = transpose(locations))
 ```
+
 
 ```{ojs}
 //| echo: false
@@ -156,7 +158,7 @@ Plotly = require("https://cdn.plot.ly/plotly-2.16.1.min.js")
 ```{ojs}
 //| echo: false
 //| output: false
-//| 
+ 
 // Filter based on inputs.
 
 filtered = data.filter(function(waterFilter) {
@@ -175,6 +177,7 @@ filtered = data.filter(function(waterFilter) {
 
 ```{ojs}
 //|output: false
+//Bulding color schemes for drop-down menu
 colors =  {  
     if (color_input == "default") {
       return ['#1f77b4',  '#ff7f0e',  '#2ca02c',  '#d62728',  '#9467bd',  '#8c564b',  '#e377c2',  '#7f7f7f',  '#bcbd22',  '#17becf',
@@ -195,7 +198,6 @@ colors =  {
     }
   }
 
-//colors(color_input);
 ```
 <!---
 Time Series
@@ -205,14 +207,15 @@ Time Series
 //| echo: false
 //|output: false
 
+//Function to make scatter plots based on variable input.
 function var_Plot(var_name) {
   if (password === correct_password) {
-  let holder = [] 
-  let holdercount = 0 
+    let holder = [] 
+    let holdercount = 0 
   
-  let datalist = []
-  let layoutlist = []
-  let divlist = []
+    let datalist = []
+    let layoutlist = []
+    let divlist = []
 
   
     let thisvar = var_name;
@@ -231,7 +234,6 @@ function var_Plot(var_name) {
             return thissite.includes(sitefilter.Name); 
           })
         //}  
-      
         let eachvar_y =     
           df_site.map(({Value:actualValue})=>actualValue);  //need to turn data into array (list of numbers to display on y-axis)
       
@@ -281,8 +283,8 @@ function var_Plot(var_name) {
         b: 30,
         t: 30,
         pad: 4
-  }, 
-      };
+      }, 
+    };
 
   
     const div = DOM.element("div"); //plots
@@ -294,7 +296,7 @@ function var_Plot(var_name) {
     
   } //if close
 
-  } // function close
+} // function close
   
 //return var_Plot();
 //} // code block close
@@ -308,9 +310,10 @@ Boxplot
 //|echo: false
 //|output: false
 
+// Function to make boxplots 
 function box_Plot(var_name) {
   if (password === correct_password) {
-  let thisvar = var_name;
+    let thisvar = var_name;
     
     if (typeof thisvar !== "undefined") { //make sure it is not undefined to avoid errors
       
@@ -318,75 +321,76 @@ function box_Plot(var_name) {
         return thisvar.includes(tracefilter.Variable);
       })
       
-  let holder = [] 
+    let holder = [] 
 
   
-  for (let i = 0; i <= site.length; i ++) {
-    let thissite = site[i];
+    for (let i = 0; i <= site.length; i ++) {
+      let thissite = site[i];
     
-    if (typeof thissite !== "undefined") {
-    let df = df_var.filter(function(tracefilter){
-      return thissite.includes(tracefilter.Name);
-    })
+      if (typeof thissite !== "undefined") {
+        let df = df_var.filter(function(tracefilter){
+        return thissite.includes(tracefilter.Name);
+      })
     
-   let eachvar_y = 
-      df.map(({Value:actualValue})=>actualValue);
+        let eachvar_y = 
+          df.map(({Value:actualValue})=>actualValue);
       
-    function get_x(toggle_boxplot) {
-      if (toggle_boxplot == true) {
+      function get_x(toggle_boxplot) {
+        if (toggle_boxplot == true) {
          return df.map(({Year:actualValue})=>actualValue);
-      } else {
-        return df.map(({Month:actualValue})=>actualValue);
-      }
-    }
-    
-    let eachtrace  = {
-      y: eachvar_y,
-      x: get_x(toggle_boxplot),
-      type: 'box',
-      name: thissite,
-      boxpoints: false,
-      marker: {
-        color: colors[i] 
+        } else {
+          return df.map(({Month:actualValue})=>actualValue);
         }
-    };
+      }
     
-    holder[i] = eachtrace;
-} // if not undefined s close
-} //i loop close
+      let eachtrace  = {
+        y: eachvar_y,
+        x: get_x(toggle_boxplot),
+        type: 'box',
+        name: thissite,
+        boxpoints: false,
+        marker: {
+          color: colors[i] 
+          }
+      };
+    
+      holder[i] = eachtrace;
+    } // if not undefined s close
+  } //i loop close
 
-var data = holder;
+    var data = holder;
+  
+    var layout = {
 
-var layout = {
-
-   autosize: true,
+    autosize: true,
      // width: 600,
       //height: 1000/varname.length, //maybe make if varname.length == 1 {height = 800} or something
       margin: {
-        l: 50,
-        r: 50,
-        b: 30,
-        t: 30,
-        pad: 4
-  }, 
-    title: {
-      text: var_name,
-      font: {
-          family: 'Arial',
-          size: 14 }
-      },
-       yaxis: {
+          l: 50,
+          r: 50,
+          b: 30,
+          t: 30,
+          pad: 4
+      }, 
+    
+      title: {
+        text: var_name,
+        font: {
+            family: 'Arial',
+            size: 14 }
+        },
+        yaxis: {
         title: 'Value'
-      }, //HERE
-  boxmode: 'group'
-  };
+        }, //HERE
+      boxmode: 'group'
+     };
 
-const div = DOM.element('div');
-Plotly.newPlot(div, data, layout, {responsive: true});
-return div; 
+    const div = DOM.element('div');
+    Plotly.newPlot(div, data, layout, {responsive: true});
+    return div; 
 
-} // not undefined var close 
-} //if password close
+    } // not undefined var close 
+  } //if password close
 } // function close
 ```
 
@@ -396,6 +400,7 @@ return div;
 
 ```{ojs}
 //|output: false
+//Filtering data for profile plots based on inputs on profiles tab
 profileData = data.filter(function(waterFilter) {
   return year == waterFilter.Year &&
          month >= waterFilter.Month;
@@ -413,14 +418,13 @@ function profile_Plot(var_name) {
   //here is where I could make a custom color scheme if I was feeling clever
 
 //filter out so only the correct variable is being used
-  let thisvar = var_name;
+    let thisvar = var_name;
     
-    if (typeof thisvar !== "undefined") { //make sure it is not undefined to avoid errors
+      if (typeof thisvar !== "undefined") { //make sure it is not undefined to avoid errors
       
-      let df_var = profileData.filter(function(tracefilter){ //filter so that one variable at a time is used in each TRACE
-        return thisvar.includes(tracefilter.Variable)
-        ;
-      })
+        let df_var = profileData.filter(function(tracefilter){ //filter so that one var at a time is used in each TRACE
+          return thisvar.includes(tracefilter.Variable);
+        })
       
     //Now need to filter so that each trace is only one DATE at one SITE. 
     //Start w/ site:
@@ -428,25 +432,24 @@ function profile_Plot(var_name) {
      let secchiholder = []
      let holdercount = 0 
      
-  for (let i = 0; i <= site.length; i ++) { //site is an input (array)
+    for (let i = 0; i <= site.length; i ++) { //site is an input (array)
   
-    let thissite = site[i];
+      let thissite = site[i];
     
-    if (typeof thissite !== "undefined") {
-      let df_site = df_var.filter(function(tracefilter){
-      return thissite.includes(tracefilter.Name) &&
-      month == tracefilter.Month; //month is also an input. This is to cut down on crowdedness in the plot. Should result in 1-3 traces per site. 
-    })
+      if (typeof thissite !== "undefined") {
+        let df_site = df_var.filter(function(tracefilter){
+        return thissite.includes(tracefilter.Name) &&
+        month == tracefilter.Month; //month is also an input. This is to cut down on crowdedness in the plot. Should result in 1-3 traces per site. 
+      })
     
-   let datelist = df_site.map(({Date:actualValue})=>actualValue);
+    let datelist = df_site.map(({Date:actualValue})=>actualValue);
     
     let outputArray = [];
     
     function removeusingSet(arr) {
-    let outputArray = Array.from(new Set(arr))
-    return outputArray
+      let outputArray = Array.from(new Set(arr))
+      return outputArray
     }
-    
     
     let unique = removeusingSet(datelist);
   
@@ -454,8 +457,8 @@ function profile_Plot(var_name) {
     for (let j = 0; j <= unique.length; j ++) {
       let thistrace = unique[j] 
       
-       if (typeof thistrace !== "undefined") {
-      let df = df_site.filter(function(tracefilter){
+      if (typeof thistrace !== "undefined") {
+        let df = df_site.filter(function(tracefilter){
         return thistrace.includes(tracefilter.Date);
       })
     //Secchi stuff was here
@@ -479,8 +482,6 @@ function profile_Plot(var_name) {
         }
       };
       
-    
-     
       let secchiholdertemp =  {
         y: [thissecchi],
         x: [0],
@@ -502,10 +503,10 @@ function profile_Plot(var_name) {
       holder[holdercount] = eachtrace; //put into list
       holdercount++; 
     
-} //this trace !undefined. Maybe move?
-} // if not undefined s close
+    } //this trace !undefined. Maybe move?
+    } // if not undefined s close
 
-}// j loop close
+  }// j loop close
 } //i loop close
     
      var data = holder.concat(secchiholder);
@@ -552,6 +553,7 @@ function profile_Plot(var_name) {
 
 ```{ojs}
 //|output: false
+//Get y-axis point to add secchi depth to profiel plot
 function getsecchi(site, date) {
       let thissecchi = profileData.filter(function(secchiFilter){
         return site.includes(secchiFilter.Name) &&
@@ -584,11 +586,11 @@ function getsecchi(site, date) {
 // Need to extract lists of latitude and longitude from staton.csv to make leaflet markers later.
 //the javascript "map" function just collapses the data into a single array. 
 
-lat = GLKNStation.map(({Latitude:actualValue})=>actualValue);  //need to turn data into array (list of numbers to display on y-axis)
+lat = station.map(({Latitude:actualValue})=>actualValue);  //need to turn data into array (list of numbers to display on y-axis)
       
-long = GLKNStation.map(({Longitude:actualValue})=>actualValue); //list of dates for x axis
+long = station.map(({Longitude:actualValue})=>actualValue); //list of dates for x axis
           
-names = GLKNStation.map(({Name:actualValue})=>actualValue);
+names = station.map(({Name:actualValue})=>actualValue);
 ```
 
 ```{ojs}
@@ -673,7 +675,7 @@ toggleFeature = (e) => {
     };
    
   
-  set(viewof site, results);
+  set(site, results); //USED TO BE VIEWOF SITE!!!
 
   };
 
@@ -754,10 +756,10 @@ justSelected = () => {
     var mysite = difference[i];
     markers[mysite].setIcon(waterIcon);
     results.splice(i, 1); 
+    
   }
 
  }
-  
 
 }
 
@@ -856,29 +858,167 @@ viewof color_input = Inputs.select(
   ["default", "natural", "NPS", "roygbiv", "greyscale", "viridis"],
   {value: "default", label: "Color pallete:"}
 )
-//Park selection
-viewof park = Inputs.checkbox(
-  ["SACN", "MISS", "ISRO", "VOYA", "SLBE", "INDU", "PIRO", "APIS"], 
-  { value: ["SACN"], multiple: true, label: "Park:" }
-)
+```
+
+```{ojs}
+//| echo: false
+//| output: false
 
 // Filter so that only sites in selected parks are displayed
-sitechoices = data.filter(function(inputdata) {
-  return park.includes(inputdata.Park);
+sacnchoices = station.filter(function(inputdata) {
+  return "SACN".includes(inputdata.Park);
 })
 
-// Select site
-//viewof site = Inputs.checkbox(sitechoices.map(d => d.Name),
-//{label: "Site:", unique: true, multiple: true})
+misschoices = station.filter(function(inputdata) {
+  return "MISS".includes(inputdata.Park);
+})
 
-//can change back to names here: https://observablehq.com/@observablehq/input-checkbox
-//should also make an "all" option
-viewof site = Inputs.checkbox(
-  sitechoices.map(d => d.Name), 
+isrochoices = station.filter(function(inputdata) {
+  return "ISRO".includes(inputdata.Park);
+})
+
+voyachoices = station.filter(function(inputdata) {
+  return "VOYA".includes(inputdata.Park);
+})
+
+slbechoices = station.filter(function(inputdata) {
+  return "SLBE".includes(inputdata.Park);
+})
+
+induchoices = station.filter(function(inputdata) {
+  return "INDU".includes(inputdata.Park);
+})
+
+apischoices = station.filter(function(inputdata) {
+  return "APIS".includes(inputdata.Park);
+})
+
+pirochoices = station.filter(function(inputdata) {
+  return "PIRO".includes(inputdata.Park);
+})
+
+///////////////////////////////////////////
+
+
+viewof sacnIn = Inputs.checkbox(
+  sacnchoices.map(d => d.Name), 
+  {label: "Site:", unique: true, sort: true, multiple: true}
+)
+
+viewof missIn = Inputs.checkbox(
+  misschoices.map(d => d.Name), 
+  {label: "Site:", unique: true, sort: true, multiple: true}
+)
+
+viewof isroIn = Inputs.checkbox(
+  isrochoices.map(d => d.Name), 
+  {label: "Site:", unique: true, sort: true, multiple: true}
+)
+
+viewof voyaIn = Inputs.checkbox(
+  voyachoices.map(d => d.Name), 
+  {label: "Site:", unique: true, sort: true, multiple: true}
+)
+
+viewof slbeIn = Inputs.checkbox(
+  slbechoices.map(d => d.Name), 
+  {label: "Site:", unique: true, sort: true, multiple: true}
+)
+
+viewof induIn = Inputs.checkbox(
+  induchoices.map(d => d.Name), 
+  {label: "Site:", unique: true, sort: true, multiple: true}
+)
+
+viewof apisIn = Inputs.checkbox(
+  apischoices.map(d => d.Name), 
+  {label: "Site:", unique: true, sort: true, multiple: true}
+)
+
+viewof piroIn = Inputs.checkbox(
+ pirochoices.map(d => d.Name), 
   {label: "Site:", unique: true, sort: true, multiple: true}
 )
 
 
+```
+
+
+
+```{ojs}
+site
+```
+
+
+```{ojs}
+import {conditionalShow} from "@john-guerra/conditional-show"
+
+```
+
+```{ojs}
+viewof sacnParks = conditionalShow(await viewof sacnIn, {
+  label: htl.html`<h4 style="display:inline">Saint Croix National River</h4>`,
+  checked: this ? this.checked : true, // keep previous value
+  // checked: false,
+  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+})
+
+viewof missParks = conditionalShow(await viewof missIn, {
+  label: htl.html`<h4 style="display:inline">Mississippi National River</h4>`,
+  checked: this ? this.checked : true, // keep previous value
+  // checked: false,
+  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+})
+
+viewof isroParks = conditionalShow(await viewof isroIn, {
+  label: htl.html`<h4 style="display:inline">Isle Royale National Park</h4>`,
+  checked: this ? this.checked : true, // keep previous value
+  // checked: false,
+  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+})
+
+viewof voyaParks = conditionalShow(await viewof voyaIn, {
+  label: htl.html`<h4 style="display:inline">Voyageurs National Park</h4>`,
+  checked: this ? this.checked : true, // keep previous value
+  // checked: false,
+  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+})
+
+viewof slbeParks = conditionalShow(await viewof slbeIn, {
+  label: htl.html`<h4 style="display:inline">Sleeping Bear Dunes National Lakeshore</h4>`,
+  checked: this ? this.checked : true, // keep previous value
+  // checked: false,
+  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+})
+
+viewof induParks = conditionalShow(await viewof induIn, {
+  label: htl.html`<h4 style="display:inline">Indiana Dunes National Park</h4>`,
+  checked: this ? this.checked : true, // keep previous value
+  // checked: false,
+  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+})
+
+viewof apisParks = conditionalShow(await viewof apisIn, {
+  label: htl.html`<h4 style="display:inline">Apostle Islands National Lakeshore</h4>`,
+  checked: this ? this.checked : true, // keep previous value
+  // checked: false,
+  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+})
+
+viewof piroParks = conditionalShow(await viewof piroIn, {
+  label: htl.html`<h4 style="display:inline">Pictured Rocks National Lakeshore</h4>`,
+  checked: this ? this.checked : true, // keep previous value
+  // checked: false,
+  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+})
+
+site1 = [sacnParks, missParks, isroParks, voyaParks, slbeParks, induParks, apisParks, piroParks]
+
+site = site1.flat(1);
+```
+
+```{ojs}
+site
 ```
 
 

@@ -1,7 +1,7 @@
 ---
 format:
   html:
-    embed-resources: false
+    embed-resources: true
     page-layout: custom
     theme: style.scss
     minimal: false
@@ -9,10 +9,6 @@ editor: source
 echo: false
 ---
 
-```{ojs}
-correct_password = "********"
-password = "********"
-```
 
 <!--head-->
 
@@ -61,6 +57,11 @@ var imgs = document.getElementsByClassName('myClass1');
 
 <!--\head-->
 
+```{ojs}
+correct_password = "glkn2023"
+viewof password = Inputs.text({label: " password"})
+```
+
 ```{r echo = FALSE, message = FALSE, include = FALSE}
 
 library(lubridate)
@@ -71,15 +72,15 @@ library(dataRetrieval)
 library(tidyverse)
 
 #Filepaths for site names and site metadata
-locations <- read.csv("GLKNStation.csv") %>% # Site names and info for all parks 
+locations <- read.csv("GLKNStations.csv") %>% # Site names and info for all parks 
  mutate(GLKNStationID = str_extract(MonitoringLocationIdentifier,"[^\\-]+$"))
 
 #Extract sites from lake parks spreadsheet
-sites_to_get <- locations$MonitoringLocationIdentifier[1:15]
+sites_to_get <- locations$MonitoringLocationIdentifier #change to the number of sites
 
 
 #Read WQP Data 
-df <- readWQPqw(c(siteNumbers = sites_to_get,""),'','') 
+df <- readWQPqw(c(siteNumbers = sites_to_get,""),'','')  
 
 
 
@@ -274,9 +275,13 @@ function var_Plot(var_name) {
        yaxis: {
         title: 'Value'
       }, //HERE
-      autosize: true,
-   //   width: 600,
-     // height: 1000/varname.length,
+      legend: {xanchor: 'right',
+      bgcolor: '#E2E2E2',
+      bordercolor: '#FFFFFF',
+      borderwidth: 2},
+      autosize: false,
+      width: 500,
+     height: 1000/varname.length,
       margin: {
         l: 50,
         r: 50,
@@ -362,9 +367,9 @@ function box_Plot(var_name) {
   
     var layout = {
 
-    autosize: true,
-     // width: 600,
-      //height: 1000/varname.length, //maybe make if varname.length == 1 {height = 800} or something
+    autosize: false,
+      width: 500,
+      height: 1000/varname.length, //maybe make if varname.length == 1 {height = 800} or something
       margin: {
           l: 50,
           r: 50,
@@ -372,7 +377,10 @@ function box_Plot(var_name) {
           t: 30,
           pad: 4
       }, 
-    
+      legend: {xanchor: 'right',
+      bgcolor: '#E2E2E2',
+      bordercolor: '#FFFFFF',
+      borderwidth: 2},
       title: {
         text: var_name,
         font: {
@@ -666,16 +674,20 @@ toggleFeature = (e) => {
             
      results.splice(i, 1); //remove site from results list and set icon to waterIcon
      e.target.setIcon(waterIcon);
+     syncMapAndCheckboxes(e.target.properties.Name, false);
       
     } else {
       //if it is not already there, put it there and change icon       
       results.push(e.target.properties.Name); 
       e.target.setIcon(waterIcon2);
+      syncMapAndCheckboxes(e.target.properties.Name, true);
+     // treeInput()(e.target.properties.Name);
 
     };
    
   
-  set(site, results); //USED TO BE VIEWOF SITE!!!
+ set(viewof site, results); 
+ // set(results, viewof site); 
 
   };
 
@@ -701,7 +713,9 @@ markers = {
       markers[name_id] = new L.marker([list_of_pairs[i][1], list_of_pairs[i][2]],
       {icon: determineIcon(list_of_pairs[i][0]),
       options: {Name: list_of_pairs[i][0]}, //this may be unnecessary 
-      id: list_of_pairs[i][0]})  //also this 
+      id: list_of_pairs[i][0],
+      keyboard: false
+      })  //also this 
     //Add event listeners 
       .on('mouseover', highlightFeature)
       .on('mouseout', resetHighlight)
@@ -723,7 +737,6 @@ markers = {
 
 
 ```
-
 ```{ojs}
 //|output: false
 // site; // if site changes
@@ -731,8 +744,8 @@ markers = {
 //Basically the same function as toggleFeature with some slight adjustements. 
 justSelected = () => {
 
-//TO ADD SITES  
- if (site.length > 0) { //otherwise will throw "undefined", the bane of my existence 
+//TO ADD SITES FROM RESULTS -- difference bwtn this and set?   
+ if (site.length >= 0) { //otherwise will throw "undefined", the bane of my existence 
  //Figure out which sites are not in results. 
  //Should just be one but it doesn't work unless it's in a loop.
  //Maybe something to do with extracting the value from array (map might work) but 
@@ -742,20 +755,27 @@ justSelected = () => {
       var mysite = difference1[i];
       markers[mysite].setIcon(waterIcon2);
       results.push(mysite); //put it into results to merge w/ sites selected from map. 
+      syncMapAndCheckboxes(mysite, true);
    }
  }
  
-//TO REOVE SITES
+//TO REMOVE SITES
 //Basically the same process backwards. 
-//Figure out which sites are in results still, but not in site anymore:
+//Figure out which sites are in results still, but not in site anymore: (deselected w/ checkbox)
  let difference = results.filter(x => site.indexOf(x) === -1);
  
 //For each of those, change icon back and remove from results. 
- if (difference.length > 0) {
-  for (var i = 0; i < difference.length; i++) { //might not need
-    var mysite = difference[i];
+ if (difference.length >= 0) {
+  for (var j = 0; j < difference.length; j++) { //might not need
+    var mysite = difference[j];
     markers[mysite].setIcon(waterIcon);
-    results.splice(i, 1); 
+   const index = results.indexOf(mysite);
+    results.splice(index, 1);
+    syncMapAndCheckboxes(mysite, false);
+ //   const checkboxElement = document.querySelector(`input[name="${mysite}"]`);
+   // checkboxElement.checked = false;
+   // let whichpark = matching(mysite);
+  //  `{whichpark}In`.splice(i, 1);
     
   }
 
@@ -765,6 +785,7 @@ justSelected = () => {
 
 justSelected(); //always need to remember to call the function!!
 ```
+
 
 ```{ojs}
 
@@ -861,93 +882,106 @@ viewof color_input = Inputs.select(
 ```
 
 ```{ojs}
-//| echo: false
-//| output: false
+viewof site = treeInput(mydata, {open: 1})
+```
 
-// Filter so that only sites in selected parks are displayed
-sacnchoices = station.filter(function(inputdata) {
-  return "SACN".includes(inputdata.Park);
-})
+```{ojs}
+function treeInput(tree, { name = getName, children = getChildren, open = 0, value = []} = {}) {
+  //value starts as blank
+  
+  const id = DOM.uid().id;
 
-misschoices = station.filter(function(inputdata) {
-  return "MISS".includes(inputdata.Park);
-})
+  const form = htl.html`<form style=${{
+    fontFamily: "var(--sans-serif)",
+    fontSize: "smaller"
+  }}>
+    ${inner(tree, { open })}
+  </form>`;
 
-isrochoices = station.filter(function(inputdata) {
-  return "ISRO".includes(inputdata.Park);
-})
+  set(value)();
 
-voyachoices = station.filter(function(inputdata) {
-  return "VOYA".includes(inputdata.Park);
-})
+  return form;
 
-slbechoices = station.filter(function(inputdata) {
-  return "SLBE".includes(inputdata.Park);
-})
+  function set(value) {
+    return function () {
+      form.value = value;
+      form.dispatchEvent(new Event("input", { bubbles: true }));
+    };
+  }
 
-induchoices = station.filter(function(inputdata) {
-  return "INDU".includes(inputdata.Park);
-})
+  function inner(node, { open } = {}) {
+    const isChecked = value.includes(name(node));
+    const isCheckable = !node.children || node.children.length === 0; // Only allow lowest level children to be checkable
+    const item = htl.html`
+      <label><input type="checkbox" name="${name(node)}" checked=${isChecked} disabled=${!isCheckable} onInput=${setCheckbox(name(node))}>
+      ${name(node)}</label>`;
+    return node.children?.length
+      ? htl.html`<details open=${Boolean(open)}>
+          <summary>${item}</summary>
+          <div style=${{ marginLeft: "24px" }}>
+            ${children(node).map(d => inner(d, { open: open - 1 }))}
+          </div>
+        </details>`
+      : htl.html`<div>${item}</div>`;
+  }
 
-apischoices = station.filter(function(inputdata) {
-  return "APIS".includes(inputdata.Park);
-})
+   function setCheckbox(nodeName) {
+    return function () { //?
+      if (value.includes(nodeName)) {
+       value = value.filter(label => label !== nodeName);
+      } else {
+        value = [...value, nodeName];
+      }
+      set(value)();
+    };
+    
 
-pirochoices = station.filter(function(inputdata) {
-  return "PIRO".includes(inputdata.Park);
-})
-
-///////////////////////////////////////////
-
-
-viewof sacnIn = Inputs.checkbox(
-  sacnchoices.map(d => d.Name), 
-  {label: "Site:", unique: true, sort: true, multiple: true}
-)
-
-viewof missIn = Inputs.checkbox(
-  misschoices.map(d => d.Name), 
-  {label: "Site:", unique: true, sort: true, multiple: true}
-)
-
-viewof isroIn = Inputs.checkbox(
-  isrochoices.map(d => d.Name), 
-  {label: "Site:", unique: true, sort: true, multiple: true}
-)
-
-viewof voyaIn = Inputs.checkbox(
-  voyachoices.map(d => d.Name), 
-  {label: "Site:", unique: true, sort: true, multiple: true}
-)
-
-viewof slbeIn = Inputs.checkbox(
-  slbechoices.map(d => d.Name), 
-  {label: "Site:", unique: true, sort: true, multiple: true}
-)
-
-viewof induIn = Inputs.checkbox(
-  induchoices.map(d => d.Name), 
-  {label: "Site:", unique: true, sort: true, multiple: true}
-)
-
-viewof apisIn = Inputs.checkbox(
-  apischoices.map(d => d.Name), 
-  {label: "Site:", unique: true, sort: true, multiple: true}
-)
-
-viewof piroIn = Inputs.checkbox(
- pirochoices.map(d => d.Name), 
-  {label: "Site:", unique: true, sort: true, multiple: true}
-)
+  }
+  
+  
+}
 
 
 ```
 
+```{ojs}
+// Add a button to your HTML interface
+
+// Define the synchronization function
+function syncMapAndCheckboxes(value, bool) {
+  // Iterate through the results array and update checkboxes and map markers
+  //for (const siteName of results) {
+    // Update checkboxes (you may need to adapt this part based on your actual checkbox implementation)
+    const checkboxElement = document.querySelector(`input[name="${value}"]`);
+    set(viewof site, results);
+  //  if (results.includes(value)) {
+   //     checkboxElement.checked = true
+   //   } else {
+   //     checkboxElement.checked = false
+   //   };
+    checkboxElement.checked = bool;
+    return checkboxElement;
+
+  //}
+}
+
+//syncMapAndCheckboxes();
+
+//checkboxElement
+// Display the button in your notebook
+//button;
+```
 
 
 ```{ojs}
-site
+mydata = FileAttachment("nestedParks.json").json()
 ```
+
+```{ojs}
+getName = (d) => d.name
+getChildren = (d) => d.children
+```
+
 
 
 ```{ojs}
@@ -955,85 +989,84 @@ import {conditionalShow} from "@john-guerra/conditional-show"
 
 ```
 
-```{ojs}
-viewof sacnParks = conditionalShow(await viewof sacnIn, {
-  label: htl.html`<h4 style="display:inline">Saint Croix National River</h4>`,
-  checked: this ? this.checked : true, // keep previous value
-  // checked: false,
-  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
-})
-
-viewof missParks = conditionalShow(await viewof missIn, {
-  label: htl.html`<h4 style="display:inline">Mississippi National River</h4>`,
-  checked: this ? this.checked : true, // keep previous value
-  // checked: false,
-  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
-})
-
-viewof isroParks = conditionalShow(await viewof isroIn, {
-  label: htl.html`<h4 style="display:inline">Isle Royale National Park</h4>`,
-  checked: this ? this.checked : true, // keep previous value
-  // checked: false,
-  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
-})
-
-viewof voyaParks = conditionalShow(await viewof voyaIn, {
-  label: htl.html`<h4 style="display:inline">Voyageurs National Park</h4>`,
-  checked: this ? this.checked : true, // keep previous value
-  // checked: false,
-  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
-})
-
-viewof slbeParks = conditionalShow(await viewof slbeIn, {
-  label: htl.html`<h4 style="display:inline">Sleeping Bear Dunes National Lakeshore</h4>`,
-  checked: this ? this.checked : true, // keep previous value
-  // checked: false,
-  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
-})
-
-viewof induParks = conditionalShow(await viewof induIn, {
-  label: htl.html`<h4 style="display:inline">Indiana Dunes National Park</h4>`,
-  checked: this ? this.checked : true, // keep previous value
-  // checked: false,
-  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
-})
-
-viewof apisParks = conditionalShow(await viewof apisIn, {
-  label: htl.html`<h4 style="display:inline">Apostle Islands National Lakeshore</h4>`,
-  checked: this ? this.checked : true, // keep previous value
-  // checked: false,
-  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
-})
-
-viewof piroParks = conditionalShow(await viewof piroIn, {
-  label: htl.html`<h4 style="display:inline">Pictured Rocks National Lakeshore</h4>`,
-  checked: this ? this.checked : true, // keep previous value
-  // checked: false,
-  returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
-})
-
-site1 = [sacnParks, missParks, isroParks, voyaParks, slbeParks, induParks, apisParks, piroParks]
-
-site = site1.flat(1);
+```{r}
+# viewof site = {
+# const  sacnParks = conditionalShow(await sacnIn, {
+#   label: htl.html`<h4 style="display:inline">Saint Croix National River</h4>`,
+#   checked: this ? this.checked : true, // keep previous value
+#   // checked: false,
+#   returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+# })
+# 
+# const missParks = conditionalShow(await missIn, {
+#   label: htl.html`<h4 style="display:inline">Mississippi National River</h4>`,
+#   checked: this ? this.checked : true, // keep previous value
+#   // checked: false,
+#   returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+# })
+# 
+# const isroParks = conditionalShow(await isroIn, {
+#   label: htl.html`<h4 style="display:inline">Isle Royale National Park</h4>`,
+#   checked: this ? this.checked : true, // keep previous value
+#   // checked: false,
+#   returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+# })
+# 
+# const voyaParks = conditionalShow(await voyaIn, {
+#   label: htl.html`<h4 style="display:inline">Voyageurs National Park</h4>`,
+#   checked: this ? this.checked : true, // keep previous value
+#   // checked: false,
+#   returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+# })
+# 
+# const slbeParks = conditionalShow(await slbeIn, {
+#   label: htl.html`<h4 style="display:inline">Sleeping Bear Dunes National Lakeshore</h4>`,
+#   checked: this ? this.checked : true, // keep previous value
+#   // checked: false,
+#   returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+# })
+# 
+# const induParks = conditionalShow(await induIn, {
+#   label: htl.html`<h4 style="display:inline">Indiana Dunes National Park</h4>`,
+#   checked: this ? this.checked : true, // keep previous value
+#   // checked: false,
+#   returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+# })
+# 
+# const apisParks = conditionalShow(await apisIn, {
+#   label: htl.html`<h4 style="display:inline">Apostle Islands National Lakeshore</h4>`,
+#   checked: this ? this.checked : true, // keep previous value
+#   // checked: false,
+#   returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+# })
+# 
+# const piroParks = conditionalShow(await piroIn, {
+#   label: htl.html`<h4 style="display:inline">Pictured Rocks National Lakeshore</h4>`,
+#   checked: this ? this.checked : true, // keep previous value
+#   // checked: false,
+#   returns: (checked, navElem) => (checked ? navElem.value : navElem.value) // what do you want it to return
+# })
+# 
+# return [sacnParks, missParks, isroParks, voyaParks, slbeParks, induParks, apisParks, piroParks];
+# 
+# }
+# //site1 = [sacnParks, missParks, isroParks, voyaParks, slbeParks, induParks, apisParks, piroParks]
+# 
+# //site = site1.flat(1);
 ```
-
-```{ojs}
-site
-```
-
 
 ## Map
 
 <i> Please select a site from checkboxes or on the map.  </i>
 
 ```{ojs}
+//|class: leafletMap
 //Container for leaflet map to go into. 
 container = {
 
   let x = d3.create("div")
   
   x.attr("style", `width:100%;height:${window.outerHeight * 0.65}px`);
-
   return x.node();
 
 }
@@ -1064,31 +1097,51 @@ viewof varname = Inputs.select(
 
 ```{ojs}
 //|panel: input
-import {interval} from '@mootari/range-slider'
+//import {interval} from '@mootari/range-slider'
 
 
-viewof yearIn = interval([2005, 2023], {
+viewof yearIn = Inputs.form([
+Inputs.range([2005, 2024], {
   step: 1,
-  value: [2005, 2023],
-  label: 'Years',
-})
-
-viewof monthIn = interval([1, 12], {
+  value: 2005,
+  label: 'Min Year',
+}),
+Inputs.range([2005, 2024], {
   step: 1,
-  value: [1, 12],
-  label: 'Months',
+  value: 2023,
+  label: 'Max Year',
 })
+])
 
-viewof depthIn = interval([0, 50], {
+viewof monthIn = Inputs.form([
+Inputs.range([1, 12], {
+  step: 1,
+  value: 1,
+  label: 'Min Month',
+}),
+Inputs.range([1, 12], {
+  step: 1,
+  value: 12,
+  label: 'Max Month',
+})
+])
+
+viewof depthIn = Inputs.form([
+Inputs.range([0, 55], {
   step: 0.5,
-  value: [0, 50],
-  label: 'Depth (m)'
+  value: 0, 
+  label: 'Min Depth (m)',
+}),
+Inputs.range([0, 55], {
+  step: 0.5,
+  value: 55,
+  label: 'Max Depth (m)',
 })
+])
 
 viewof toggle_boxplot = Inputs.toggle({label: "Boxplot by Year", value: true})
 
 ```
-
 
 ```{ojs}
 //| echo: false
@@ -1235,10 +1288,10 @@ button = (data, filename = 'data.csv') => {
 
 ```{ojs}
 //| echo: false
-//{
-//if (password === correct_password) {
 
-  Inputs.table(filtered)
+{if (password === correct_password) {
+  
+  return Inputs.table(filtered)
 
 
 {const buttondiv = DOM.element('buttondiv');
@@ -1248,9 +1301,8 @@ button = (data, filename = 'data.csv') => {
   buttondiv.appendChild(csvBtn);
   return buttondiv; 
   }
-  
-//}
-//}
+}
+}
 ```
 
 
